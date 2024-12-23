@@ -79,27 +79,6 @@ class PermissionsTableSeeder extends Seeder
             [
                 'name'        => 'Permission Delete',
                 'description' => 'Delete Permission or selected Permissions',
-            ],
-            //Roles & Permissions
-            [
-                'name'        => 'Roles & Permissions Access',
-                'description' => 'Access to Roles & Permissions',
-            ],
-            [
-                'name'        => 'Roles & Permissions Create',
-                'description' => 'Create new Role',
-            ],
-            [
-                'name'        => 'Roles & Permissions Edit',
-                'description' => 'Edit Role',
-            ],
-            [
-                'name'        => 'Roles & Permissions Delete',
-                'description' => 'Delete Role',
-            ],
-            [
-                'name'        => 'Roles & Permissions Export',
-                'description' => 'Export selected permissions',
             ]
         ];
 

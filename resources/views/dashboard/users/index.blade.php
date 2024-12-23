@@ -8,7 +8,7 @@
 @section('content_header_subtitle', 'Users') 
 
 @section('content_body')
-<x-adminlte-datatable id="userTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
+<x-adminlte-datatable id="usersTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
     striped hoverable with-buttons/>
 
 <x-adminlte-modal id="addEditItemModal" title="Add User">
@@ -69,10 +69,28 @@
 
 @push('js')
 <script>
-  
+const buttons = `
+    <x-adminlte-button 
+        id="addItem" 
+        class="btn-sm mb-1 ml-1" 
+        theme="success" 
+        title="Add User"
+        icon="fa fa-user-plus"
+        data-toggle="modal" 
+        data-target="#addEditItemModal" 
+    />
+    <x-adminlte-button 
+        id="deleteBulk" 
+        class="btn-sm mb-1 d-none" 
+        theme="danger" 
+        title="Delete Users"
+        icon="fa fa-trash"
+    />
+`.replace(/\s+/g, ' ').trim()  
+
 $(() => {
     
-    const table = $("#userTable").DataTable()
+    const table = $("#usersTable").DataTable()
 
     const fields = {
         name: "", 
@@ -90,11 +108,13 @@ $(() => {
 
     $("form input").on("keyup", handleInputValidation)    
 
-    handleBulkCheckBoxes()
+    handleBulkCheckBoxes({ id: '#bulk', className: '.bulk' })
 
     deleteItem(table)
 
     deleteBulkItem(table)
+
+    $('#usersTable_filter label').append(buttons)
 })
 </script>
 @endpush
