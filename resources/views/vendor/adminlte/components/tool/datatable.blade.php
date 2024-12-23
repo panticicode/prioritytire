@@ -11,7 +11,7 @@
                 <th @isset($th['classes']) class="{{ $th['classes'] }}" @endisset
                     @isset($th['width']) style="width:{{ $th['width'] }}%" @endisset
                     @isset($th['no-export']) dt-no-export @endisset>
-                    {{ is_array($th) ? ($th['label'] ?? '') : $th }}
+                    {!! is_array($th) ? ($th['label'] ?? '') : $th !!}
                 </th>
             @endforeach
         </tr>

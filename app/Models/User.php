@@ -49,4 +49,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    protected $appends = ['checkbox', 'action'];
+
+    public function getCheckboxAttribute() {
+        $checkbox = '<input type="checkbox" class="bulk" data-id="' . $this->id . '" />';
+
+        return $checkbox;
+    }
+
+    public function getActionAttribute() {
+        $button = array_map('trim', config('adminlte.plugins.Datatables.actions.buttons'));
+
+        $viewButton   = str_replace("<button", "<button data-id='$this->id'", $button['view']);
+        $editButton   = str_replace('<button', "<button data-id='$this->id'", $button['edit']);
+        $deleteButton = str_replace('<button', "<button data-id='$this->id'", $button['delete']);
+        
+        $action = '<nobr>' . $viewButton . $editButton . $deleteButton . '</nobr>';
+        
+        return preg_replace('/\s+/', ' ', trim($action));
+    }
 }
