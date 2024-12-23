@@ -8,6 +8,7 @@ use App\Http\Requests\Dashboard\Permissions\CreatePermissionRequest;
 use App\Http\Requests\Dashboard\Permissions\UpdatePermissionRequest;
 use Illuminate\Support\Str;
 use App\Models\Permission;
+use App\Models\User;
 use Auth;
 use DB;
 
@@ -22,8 +23,8 @@ class PermissionsController extends Controller
    
             if(Auth::check())
             {
-                $this->user   = Auth::user();
-                $this->config = $this->config();
+                $this->user    = Auth::user();
+                $this->config  = $this->config();
             }
             return $next($request);
         });
@@ -50,7 +51,12 @@ class PermissionsController extends Controller
             }
         }, $columns);
 
-       $formattedColumns[] = [
+        $formattedColumns[] = [
+            'label' => 'Users', 
+            'width' => 1, 
+        ];
+
+        $formattedColumns[] = [
             'label' => 'Actions', 
             'no-export' => true, 
             'width' => 5, 
@@ -59,7 +65,10 @@ class PermissionsController extends Controller
 
         $heads = array_values(array_filter($formattedColumns));
 
-        $permissions = Permission::select('id', 'name', 'description', 'created_at')->get();
+        $permissions = Permission::select('id', 'name', 'description', 'created_at')
+                                    ->withCount(['users' => function ($query) {
+                                        $query->whereNotNull('parent_id'); 
+                                    }])->get();   
 
         $config = [
             'heads' => array_merge(
@@ -76,6 +85,7 @@ class PermissionsController extends Controller
                     $permission->id,
                     $permission->name,
                     $permission->description,
+                    $permission->users_count,// Exclude Admin for counting
                     $permission->action,
                 ];
             })->toArray(),
@@ -86,7 +96,65 @@ class PermissionsController extends Controller
                     null,
                     null,
                     null,
+                    null,
                     ['orderable' => false], 
+                ]
+            ),
+        ];
+
+        return $config;
+    }
+    
+    protected function users()
+    {
+        $columns = DB::getSchemaBuilder()->getColumnListing('users');
+
+        $columnsToFormat = ['id', 'name', 'email'];
+
+        $formattedColumns = array_map(function ($column) use ($columnsToFormat) {
+            if (in_array($column, $columnsToFormat)) 
+            {
+                if ($column === 'id') 
+                {
+                    return [
+                        'label' => Str::upper($column),
+                        'width' => 1, 
+                    ]; 
+                }
+                return [
+                    'label' => Str::title( $column )
+                ];
+            }
+        }, $columns);
+
+        $heads = array_values(array_filter($formattedColumns));
+
+        $users = User::whereNotNull('parent_id')
+                        ->where('id', '!=', $this->user->id)
+                        ->select('id', 'name', 'email', 'created_at')->get();
+            
+        $config = [
+            'heads' => array_merge(
+                [[
+                    'label' => '<input type="checkbox" id="bulkAssignPermission" />', 
+                    'width' => 1
+                ]], $heads
+            ),
+            'data' => $users->map(function ($user) {
+                return [
+                    '<input type="checkbox" class="bulkAssignPermission" data-id="' . $user->id . '" />', 
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                ];
+            })->toArray(),
+            'order'   => [[1, 'desc']],
+            'columns' => array_merge(
+                [['orderable' => false]], 
+                [
+                    null,
+                    null,
+                    null
                 ]
             ),
         ];
@@ -99,7 +167,8 @@ class PermissionsController extends Controller
     public function index()
     {
         $config = $this->config;
-        return view('dashboard/permissions/index', compact('config'));
+        $users  = $this->users();
+        return view('dashboard/permissions/index', compact('config', 'users'));
     }
 
     /**
@@ -112,7 +181,7 @@ class PermissionsController extends Controller
             try {
                 $data = $request->only(['name', 'description']);
                
-                $permission = Permission::create($data);
+                $permission = Permission::withCount('users')->create($data);
 
                 return response()->json([
                     'status'  => 200,
@@ -121,6 +190,7 @@ class PermissionsController extends Controller
                         $permission->id,
                         $permission->name,
                         $permission->description,
+                        $permission->users_count ?? 0,
                         $permission->action
                     ],
                     'theme'   => 'success',
@@ -144,12 +214,25 @@ class PermissionsController extends Controller
     {
         if($request->ajax())
         {
+            $users = $permission->users()
+                        ->whereNotNull('parent_id')
+                        ->get()->map(function($user){
+                return [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email
+                ];
+            });
+
             return [
-                'checkbox'    => $permission->checkbox,
-                'id'          => $permission->id,
-                'name'        => $permission->name,
-                'description' => $permission->description,
-                'action'      => $permission->action
+                'data' => [
+                    'checkbox'    => $permission->checkbox,
+                    'id'          => $permission->id,
+                    'name'        => $permission->name,
+                    'description' => $permission->description,
+                    'action'      => $permission->action
+                ],
+                'users' => $users
             ];
         }
     }
@@ -166,6 +249,8 @@ class PermissionsController extends Controller
 
                 $permission->update($data);
 
+                $permission->loadCount('users');
+
                 return response()->json([
                     'status'  => 200,
                     'data'    => [
@@ -173,6 +258,7 @@ class PermissionsController extends Controller
                         $permission->id,
                         $permission->name,
                         $permission->description,
+                        $permission->users_count ?? 0,
                         $permission->action
                     ],
                     'theme'   => 'success',
@@ -214,6 +300,57 @@ class PermissionsController extends Controller
         }
     }
 
+    public function assign_user_permissions($user_ids, $permission_ids)
+    {
+        try {
+            $userIds       = explode(',', $user_ids);
+            $permissionIds = explode(',', $permission_ids);
+
+            $permissions   = Permission::with('users')->whereIn('id', $permissionIds)->get();
+
+            $timestamp     = ['created_at' => now(), 'updated_at' => now()];
+
+            foreach($permissions as $permission)
+            {
+                $existingUsers = $permission->users()
+                                            ->whereIn('id', $userIds)
+                                            ->pluck('id')
+                                            ->toArray();
+
+                $newUserIds = array_diff($userIds, $existingUsers);
+
+
+                if (!empty($newUserIds)) 
+                {
+                    $permission->users()->attach($newUserIds, $timestamp);
+                } 
+                else 
+                {
+                    return response([
+                        'status'  => 409,
+                        'theme'   => 'warning',
+                        'message' => "Permission $permission->name is already assigned to the selected users."
+                    ]);
+                }
+            }
+
+            return response([
+                'status'  => 200,
+                'data'    => $this->config(),
+                'theme'   => 'success',
+                'message' => 'Selected permissions assigned successfully to selected users'
+            ]);
+
+        } catch (Exception $e) {
+             \Log::error('Assign Permissions failed: ' . $e->getMessage());
+            return response()->json([
+                'status'  => 500,
+                'theme'   => 'error',
+                'message' => 'An error occurred while assigning the permission.',
+            ]);
+        }
+    }
+
     public function bulk_delete($ids)
     {
         try {
@@ -228,7 +365,7 @@ class PermissionsController extends Controller
             return response([
                 'status' => 200,
                 'theme'   => 'success',
-                'message' => "Selected permissions deleted successfully"
+                'message' => 'Selected permissions deleted successfully'
             ]);
         } catch (Exception $e) {
              \Log::error('Permission bulk deleting failed: ' . $e->getMessage());

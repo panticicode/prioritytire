@@ -31,7 +31,7 @@ const csrf = () => {
 } 
 
 const addItem = (fields, button, form, text) => {
-    $(button).on("click", () => {
+    $(document).on("click", button, () => {
         setValue(fields, "create")
         $("#addEditItemForm").attr("action", window.location.href)
         $("#addEditItemModal .modal-title").text(text)
@@ -53,7 +53,18 @@ const viewItem = (button, template) => {
         csrf()
         
         $.get(url, (res) => {
-            setValue(res, "view")
+            setValue(res.data, "view")
+            
+            let users = res.users.length
+                ? res.users.map(user => `
+                    <li class="list-group-item text-left px-0 pb-0">
+                        <i class="fas fa-circle-notch fa-xs mr-1"></i>
+                        <strong>${user.name}</strong> (${user.email})
+                    </li>
+                `).join('')
+                : '<li class="list-group-item text-center">No users for the given permission</li>'
+
+            $('#userList').html(users)
         })
     })
 }
@@ -68,7 +79,7 @@ const editItem = (button, form, text) => {
         csrf()
         
         $.get(url, (res) => {
-            const response = { ...res, _method: "PUT" }
+            const response = { ...res.data, _method: "PUT" }
             setValue(response, "edit")
             
             $("#addEditItemModal .modal-title").text(text)
@@ -218,8 +229,59 @@ const deleteItem = (table) => {
     })
 }
 
+const assignUserPermissions = (table, selector) => {
+    $(selector).on("click", (evt) => {
+        const permissionIds = $(".bulk:checked").map((i, e) => $(e).data("id")).get().join(",")
+        const userIds       = $(".bulkAssignPermission:checked").map((i, e) => $(e).data("id")).get().join(",")
+
+        const url = `${window.location.origin}/dashboard/user/${userIds}/permission/${permissionIds}/assign`
+        
+        csrf()
+        $.post(url, (res) => {
+            $("#assignPermissionModal").modal("hide")
+            showAlert(res.theme, res.message)
+            uncheckElements(".bulk:checked")
+            uncheckElements("#bulk:checked")
+            uncheckElements(".bulkAssignPermission:checked")
+            uncheckElements("#bulkAssignPermission:checked")
+
+            toggleElement("#assignPermission", false)
+            toggleElement("#removePermission", false)
+            toggleElement("#deleteBulk", false)
+
+            if(res.status === 200)
+            {
+                const permission_ids = permissionIds.split(",").map(Number)
+                const user_ids       = userIds.split(",").map(Number)
+
+                const items  = {  
+                    permission_ids:permission_ids, 
+                    user_ids:user_ids
+                }
+
+                items.permission_ids.forEach((permission_id, index) => {
+                    const userCount = items.user_ids.length
+                    
+                    const row = table.row(function(idx, data, node) {
+                        return data[1] == permission_id
+                    })
+
+                    if (row.length) 
+                    {
+                        const rowData = row.data()
+                        rowData[4] = rowData[4] + userCount 
+                        
+                        row.data(rowData).draw(false)
+                    }
+                })
+                
+            }
+        })
+    })
+}
+
 const deleteBulkItem = (table) => {
-    $("#deleteBulk").on("click", () => {
+    $(document).on("click", "#deleteBulk", () => {
         let dataIds = []
         
         $(".bulk:checked").each((i, e) => {
@@ -257,26 +319,36 @@ const deleteBulkItem = (table) => {
                     }) 
                     .then(() => {
                         table.rows(".selected").remove().draw(false)
-                        isChecked()
+                        isChecked({ id: '#bulk', className: '.bulk' })
                     })
                 })
             }
             else
             {
-                $(".bulk:checked").each((i, e) => {
-                    $(e).prop("checked", false)
-                })
-                isChecked()
+                uncheckElements(".bulk:checked")
+                isChecked({ id: '#bulk', className: '.bulk' })
             }
         })
     })
 }
 
-const handleBulkCheckBoxes = () => {
-    $("#bulk").on("click", (evt) => {
+const handleCloseModals = (selector) => {
+    $(selector).on("hidden.bs.modal", () => {
+        uncheckElements(".bulk:checked")
+        uncheckElements("#bulk:checked")
+        uncheckElements(".bulkAssignPermission:checked")
+        uncheckElements("#bulkAssignPermission:checked")
+
+        toggleElement("#assignPermission", false)
+        toggleElement("#removePermission", false)
+        toggleElement("#deleteBulk", false)
+    })
+}
+const handleBulkCheckBoxes = (selector) => {
+    $(selector.id).on("click", (evt) => {
         $this = evt.currentTarget
         
-        $(".bulk").each((i, e) => {
+        $(selector.className).each((i, e) => {
             $(e).prop("checked", $($this).prop("checked"))
 
             if($(e).prop("checked"))
@@ -289,10 +361,10 @@ const handleBulkCheckBoxes = () => {
             }
         })
         
-        isChecked()
+        isChecked(selector)
     })
 
-    $(document).on("change", ".bulk", (evt) => {
+    $(document).on("change", selector.className, (evt) => {
         $this = evt.currentTarget
 
         if($($this).prop("checked"))
@@ -303,41 +375,67 @@ const handleBulkCheckBoxes = () => {
         {
             $($this).parents().closest("tr").removeClass("selected")
         }
-        isChecked()
+        isChecked(selector)
     })
 }
-const isChecked = () => {
-    const isChecked = $(".bulk:checked").length > 0
 
-    if(isChecked)
-    {
-        $("#deleteBulk").removeClass("d-none")
-    }
-    else
-    {
-        $("#deleteBulk").addClass("d-none")
-        $("#bulk").prop("checked", false)
-    }
+const uncheckElements = (selector) => {
+    $(selector).prop("checked", false)
+}
 
-    if($(".bulk").length > 0)
-    {
-        $("#bulk").removeAttr("disabled")
+const toggleElement = (selector, show) => {
+    $(selector).toggleClass("d-none", !show)
+}
+
+const toggleBulkElement = (selector, show) => {
+    $(selector).prop("checked", show).attr("disabled", !show)
+}
+
+const isChecked = (selector) => {
+ 
+    const hasCheckedItems = $(`${selector.className}:checked`).length > 0
+    const hasBulkItems = $(selector.className).length > 0
+
+    const checkObj = { id: '#bulk', className: '.bulk' }
+
+    const containsSelector = () => {
+        return selector.id === checkObj.id && selector.className === checkObj.className
     }
-    else
+    if(containsSelector())
     {
-        $("#bulk").attr("disabled", true)
+        toggleElement("#assignPermission", hasCheckedItems && $("#assignPermission").length)
+        toggleElement("#removePermission", hasCheckedItems && $("#removePermission").length)
+        toggleElement("#deleteBulk", hasCheckedItems)
+    }
+    
+    toggleBulkElement(selector.id, hasBulkItems)
+
+    if (!hasCheckedItems) 
+    {
+        $(selector.id).prop("checked", false)
     }
 }
 
 const showAlert = (theme, message) => {
+    let background
+    switch(theme)
+    {
+        case("warning"):
+                background = "#f1ba15"
+            break;
+        default:
+                background = "#51a351"
+            break;    
+    }
+    
 	const Toast = Swal.mixin({
 	  	toast: true,
 	  	position: "top",
 	  	showConfirmButton: false,
 	  	showCloseButton: true,
-	  	background: "#51a351",
+	  	background: background,
 	  	iconColor: "#fff",
-	  	timer: 5000,
+	  	timer: null,
 	  	timerProgressBar: true,
 		didOpen: (toast) => {
 		    toast.onmouseenter = Swal.stopTimer
@@ -358,4 +456,3 @@ const cleanAlerts = () => {
     $(".is-invalid").removeClass("is-invalid")
     $(".invalid-feedback").remove()
 }
-

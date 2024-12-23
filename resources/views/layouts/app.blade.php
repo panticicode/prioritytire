@@ -14,6 +14,9 @@
     .nav-sidebar ul.nav-treeview li.nav-item a.nav-link {
         width: 96%;
     }
+    .dataTables_filter label button#deleteBulk {
+        padding: .25rem .7rem;
+    }
     .swal2-custom-title {
         padding: 5px .9em 0;
         text-align: left;
@@ -74,29 +77,4 @@
 
 @push('js')
 <script src="{{ asset('js/functions.js') }}"></script>
-<script>
-$(() => {
-    const button = `
-        <x-adminlte-button 
-            id="addItem" 
-            class="btn-sm mb-1" 
-            theme="success" 
-            title="Add Item"
-            icon="fa fa-plus"
-            data-toggle="modal" 
-            data-target="#addEditItemModal" 
-        />
-
-        <x-adminlte-button 
-            id="deleteBulk" 
-            class="btn-sm mb-1 d-none" 
-            theme="danger" 
-            title="Delete Items"
-            icon="fa fa-trash"
-        />
-    `.replace(/\s+/g, ' ').trim()
-    
-    $('.dataTables_filter label').append(button)
-})
-</script>
 @endpush

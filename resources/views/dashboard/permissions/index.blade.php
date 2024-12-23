@@ -1,5 +1,15 @@
 @extends('layouts.app')
 
+@push('css')
+<style type="text/css">
+#userList {
+    max-height: 200px;
+    overflow: auto;
+    padding-left: .5rem;
+}
+</style>
+@endpush
+
 @section('plugins.Datatables', true)
 @section('plugins.Sweetalert2', true)
 
@@ -8,10 +18,10 @@
 @section('content_header_subtitle', 'Permissions') 
 
 @section('content_body')
-<x-adminlte-datatable id="permissionTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
+<x-adminlte-datatable id="permissionsTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
     striped hoverable with-buttons/>
 
-<x-adminlte-modal id="addEditItemModal" title="Add Permission">
+<x-adminlte-modal id="addEditItemModal" title="Add Permission" v-centered>
     <form id="addEditItemForm" method="POST">
         @csrf 
         <x-adminlte-input name="name" label="Name" placeholder="Permission name" label-class="text-lightblue">
@@ -36,6 +46,36 @@
     </x-slot>
 </x-adminlte-modal> 
 
+<x-adminlte-modal id="assignPermissionModal" title="Assign Permissions" size="lg" theme="teal"
+    icon="fas fa-user-tag" v-centered static-backdrop scrollable>
+    <div style="height:400px;">
+        <p class="text-bold">
+            Select the users who will be assigned the selected permission(s).
+        </p>
+
+        <x-adminlte-datatable id="assignUserPermissionsTable" :heads="$users['heads']" :config="$users" theme="info" striped hoverable/>
+
+        <x-slot name="footerSlot">
+            <x-adminlte-button id="assignUserPermission" theme="primary" label="Assign"/>
+        </x-slot>
+    </div>
+</x-adminlte-modal>
+
+<x-adminlte-modal id="removePermissionModal" title="Remove Permissions" size="lg" theme="warning"
+    icon="fas fa-user-times" v-centered static-backdrop scrollable>
+    <div style="height:400px;">
+        <p class="text-bold">
+           Select the users from whom the selected permission(s) will be removed.
+        </p>
+
+        <x-adminlte-datatable id="removeUserPermissionsTable" :heads="$users['heads']" :config="$users" theme="info" striped hoverable/>
+
+        <x-slot name="footerSlot">
+            <x-adminlte-button id="removeUserPermission" theme="danger" label="Remove"/>
+        </x-slot>
+    </div>
+</x-adminlte-modal>
+
 <template id="view-item-template">
     <swal-title>
         Permission details
@@ -51,6 +91,14 @@
                 <label for="description">Description</label>
                 <textarea class="form-control" id="description" rows="3" readonly></textarea>
             </div>
+            
+            <button class="btn btn-link p-0 row d-flex" type="button" data-toggle="collapse" data-target="#collapseUserAccordion" aria-expanded="false" aria-controls="collapseUserAccordion">
+                Users
+            </button>
+            
+            <div class="collapse" id="collapseUserAccordion">
+                <ul id="userList" class="list-group"></ul>
+            </div>
         </div>
     </swal-html>
 </template>
@@ -58,10 +106,46 @@
 
 @push('js')
 <script>
-  
+const buttons = `
+    <x-adminlte-button 
+        id="addItem" 
+        class="btn-sm mb-1 ml-1" 
+        theme="success" 
+        title="Add Permission"
+        icon="fa fa-user-plus"
+        data-toggle="modal" 
+        data-target="#addEditItemModal" 
+    />
+    <x-adminlte-button 
+        id="assignPermission" 
+        class="btn-sm mb-1 d-none" 
+        theme="primary" 
+        title="Asign Permission"
+        icon="fas fa-user-shield"
+        data-toggle="modal" 
+        data-target="#assignPermissionModal" 
+    />
+    <x-adminlte-button 
+        id="removePermission" 
+        class="btn-sm mb-1 d-none" 
+        theme="warning" 
+        title="Remove Permission"
+        icon="fas fa-user-lock"
+        data-toggle="modal" 
+        data-target="#removePermissionModal" 
+    />
+    <x-adminlte-button 
+        id="deleteBulk" 
+        class="btn-sm mb-1 d-none" 
+        theme="danger" 
+        title="Delete Permissions"
+        icon="fa fa-trash"
+    />
+`.replace(/\s+/g, " ").trim()
+
 $(() => {
     
-    const table = $("#permissionTable").DataTable()
+    const table = $("#permissionsTable").DataTable()
 
     const fields = {
         name: "", 
@@ -78,11 +162,21 @@ $(() => {
 
     $("form input").on("keyup", handleInputValidation)    
 
-    handleBulkCheckBoxes()
+    handleCloseModals("#assignPermissionModal")
+
+    handleCloseModals("#removePermissionModal")
+
+    handleBulkCheckBoxes({ id: "#bulk", className: ".bulk" })
+
+    handleBulkCheckBoxes({ id: "#bulkAssignPermission", className: ".bulkAssignPermission" })
 
     deleteItem(table)
 
+    assignUserPermissions(table, "#assignUserPermission")
+
     deleteBulkItem(table)
+
+    $("#permissionsTable_filter label").append(buttons)
 })
 </script>
 @endpush

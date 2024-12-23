@@ -150,11 +150,13 @@ class UsersController extends Controller
         if($request->ajax())
         {
             return [
-                'checkbox' => $user->checkbox,
-                'id'       => $user->id,
-                'name'     => $user->name,
-                'email'    => $user->email,
-                'action'   => $user->action
+                'data' => [
+                    'checkbox' => $user->checkbox,
+                    'id'       => $user->id,
+                    'name'     => $user->name,
+                    'email'    => $user->email,
+                    'action'   => $user->action
+                ]
             ];
         }
     }
