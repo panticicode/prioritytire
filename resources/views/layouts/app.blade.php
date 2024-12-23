@@ -97,8 +97,6 @@ $(() => {
     `.replace(/\s+/g, ' ').trim()
     
     $('.dataTables_filter label').append(button)
-
-    $(".buttons-print").remove()
 })
 </script>
 @endpush

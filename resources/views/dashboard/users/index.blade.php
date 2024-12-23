@@ -74,7 +74,13 @@ $(() => {
     
     const table = $("#userTable").DataTable()
 
-    addItem("#addItem", "#addEditItemForm", "Add User")
+    const fields = {
+        name: "", 
+        email: "", 
+        password: ""
+    }
+
+    addItem(fields, "#addItem", "#addEditItemForm", "Add User")
 
     viewItem(".view-item", "#view-item-template")
 
