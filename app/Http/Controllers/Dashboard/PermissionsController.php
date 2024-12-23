@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Http\Requests\Dashboard\Permissions\CreatePermissionRequest;
+use App\Http\Requests\Dashboard\Permissions\UpdatePermissionRequest;
+use Illuminate\Support\Str;
+use App\Models\Permission;
 use Auth;
+use DB;
 
 class PermissionsController extends Controller
 {
@@ -26,25 +30,67 @@ class PermissionsController extends Controller
     }
     protected function config()
     {
-        $heads = [
-            'ID',
-            'Name',
-            ['label' => 'Phone', 'width' => 40],
-            ['label' => 'Actions', 'no-export' => true, 'width' => 5],
+        $columns = DB::getSchemaBuilder()->getColumnListing('permissions');
+
+        $columnsToFormat = ['id', 'name', 'description'];
+
+        $formattedColumns = array_map(function ($column) use ($columnsToFormat) {
+            if (in_array($column, $columnsToFormat)) 
+            {
+                if ($column === 'id') 
+                {
+                    return [
+                        'label' => Str::upper($column),
+                        'width' => 5, 
+                    ]; 
+                }
+                return [
+                    'label' => Str::title( $column )
+                ];
+            }
+        }, $columns);
+
+       $formattedColumns[] = [
+            'label' => 'Actions', 
+            'no-export' => true, 
+            'width' => 5, 
+            'classes' => 'text-center'
         ];
 
-        $button = array_map('trim', config('adminlte.plugins.Datatables.actions.buttons'));
+        $heads = array_values(array_filter($formattedColumns));
+
+        $permissions = Permission::select('id', 'name', 'description', 'created_at')->get();
 
         $config = [
-            'heads' => $heads,
-            'data' => [
-                [22, 'John Bender', '+02 (123) 123456789', '<nobr>'.$button['edit'].$button['delete'].$button['view'].'</nobr>'],
-                [19, 'Sophia Clemens', '+99 (987) 987654321', '<nobr>'.$button['edit'].$button['delete'].$button['view'].'</nobr>'],
-                [3, 'Peter Sousa', '+69 (555) 12367345243', '<nobr>'.$button['edit'].$button['delete'].$button['view'].'</nobr>'],
-            ],
-            'order' => [[1, 'asc']],
-            'columns' => [null, null, null, ['orderable' => false]],
+            'heads' => array_merge(
+                [[
+                    'label' => '<input type="checkbox" id="bulk" />', 
+                    'no-export' => true, 
+                    'width' => 1, 
+                    'classes' => 'text-center'
+                ]], $heads
+            ),
+            'data' => $permissions->map(function ($permission) {
+                return [
+                    $permission->checkbox, 
+                    $permission->id,
+                    $permission->name,
+                    $permission->description,
+                    $permission->action,
+                ];
+            })->toArray(),
+            'order'   => [[1, 'desc']],
+            'columns' => array_merge(
+                [['orderable' => false]], 
+                [
+                    null,
+                    null,
+                    null,
+                    ['orderable' => false], 
+                ]
+            ),
         ];
+
         return $config;
     }
     /**
@@ -57,50 +103,140 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(CreatePermissionRequest $request)
     {
-        //
+        if($request->ajax())
+        {
+            try {
+                $data = $request->only(['name', 'description']);
+               
+                $permission = Permission::create($data);
+
+                return response()->json([
+                    'status'  => 200,
+                    'data'    => [
+                        $permission->checkbox,
+                        $permission->id,
+                        $permission->name,
+                        $permission->description,
+                        $permission->action
+                    ],
+                    'theme'   => 'success',
+                    'message' => 'New Permission Created',
+                ]);
+            } catch (Exception $e) {
+                \Log::error('Permission creation failed: ' . $e->getMessage());
+                return response()->json([
+                    'status'  => 500,
+                    'theme'   => 'error',
+                    'message' => 'An error occurred while creating the permission.',
+                ]);
+            }
+        } 
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, Permission $permission)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        if($request->ajax())
+        {
+            return [
+                'checkbox'    => $permission->checkbox,
+                'id'          => $permission->id,
+                'name'        => $permission->name,
+                'description' => $permission->description,
+                'action'      => $permission->action
+            ];
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdatePermissionRequest $request, Permission $permission)
     {
-        //
+        if($request->ajax())
+        {
+            try {
+                $data = $request->only(['name', 'description']);
+
+                $permission->update($data);
+
+                return response()->json([
+                    'status'  => 200,
+                    'data'    => [
+                        $permission->checkbox,
+                        $permission->id,
+                        $permission->name,
+                        $permission->description,
+                        $permission->action
+                    ],
+                    'theme'   => 'success',
+                    'message' => 'Permission Updated',
+                ]);
+
+            } catch (Exception $e) {
+                \Log::error('Permission updating failed: ' . $e->getMessage());
+
+                return response()->json([
+                    'status'  => 500,
+                    'theme'   => 'error',
+                    'message' => 'An error occurred while updating the permission.',
+                ]);
+            }
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Permission $permission)
     {
-        //
+        try {
+            $permission->delete();
+
+            return response()->json([
+                'status'  => 200,
+                'theme'   => 'success',
+                'message' => 'Permission deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Permission deleting failed: ' . $e->getMessage());
+            return response()->json([
+                'status'  => 500,
+                'theme'   => 'error',
+                'message' => 'An error occurred while deleting the permission.',
+            ]);
+        }
+    }
+
+    public function bulk_delete($ids)
+    {
+        try {
+            $ids = explode(',', $ids);  
+            $permissions = Permission::whereIn('id', $ids)->get();
+
+            foreach($permissions as $permission)
+            {
+                $permission->delete();
+            }
+
+            return response([
+                'status' => 200,
+                'theme'   => 'success',
+                'message' => "Selected permissions deleted successfully"
+            ]);
+        } catch (Exception $e) {
+             \Log::error('Permission bulk deleting failed: ' . $e->getMessage());
+            return response()->json([
+                'status'  => 500,
+                'theme'   => 'error',
+                'message' => 'An error occurred while bulk deleting the permission.',
+            ]);
+        }
     }
 }

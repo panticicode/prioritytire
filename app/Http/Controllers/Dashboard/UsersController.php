@@ -41,7 +41,8 @@ class UsersController extends Controller
                 if ($column === 'id') 
                 {
                     return [
-                        'label' => Str::upper($column)
+                        'label' => Str::upper($column),
+                        'width' => 5, 
                     ]; 
                 }
                 return [
@@ -50,10 +51,15 @@ class UsersController extends Controller
             }
         }, $columns);
 
-        $formattedColumns[] = ['label' => 'Actions', 'width' => 5, 'classes' => 'text-center'];
+        $formattedColumns[] = [
+            'label' => 'Actions', 
+            'no-export' => true, 
+            'width' => 5, 
+            'classes' => 'text-center'
+        ];
 
         $heads = array_values(array_filter($formattedColumns));
-
+        
         $users = User::whereNotNull('parent_id')
                         ->where('id', '!=', $this->user->id)
                         ->select('id', 'name', 'email', 'created_at')->get();
@@ -62,6 +68,7 @@ class UsersController extends Controller
             'heads' => array_merge(
                 [[
                     'label' => '<input type="checkbox" id="bulk" />', 
+                    'no-export' => true, 
                     'width' => 1, 
                     'classes' => 'text-center'
                 ]], $heads
@@ -114,7 +121,13 @@ class UsersController extends Controller
 
                 return response()->json([
                     'status'  => 200,
-                    'data'    => $user,
+                    'data'    => [
+                        $user->checkbox,
+                        $user->id,
+                        $user->name,
+                        $user->email,
+                        $user->action
+                    ],
                     'theme'   => 'success',
                     'message' => 'New User Created',
                 ]);
@@ -136,7 +149,13 @@ class UsersController extends Controller
     {
         if($request->ajax())
         {
-            return $user;
+            return [
+                'checkbox' => $user->checkbox,
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'email'    => $user->email,
+                'action'   => $user->action
+            ];
         }
     }
 
@@ -161,16 +180,29 @@ class UsersController extends Controller
                 
                 $user->update($data);
 
+                return response()->json([
+                    'status'  => 200,
+                    'data'    => [
+                        $user->checkbox,
+                        $user->id,
+                        $user->name,
+                        $user->email,
+                        $user->action
+                    ],
+                    'theme'   => 'success',
+                    'message' => 'User Updated',
+                ]);
+
             } catch (Exception $e) {
-                
+                \Log::error('User updating failed: ' . $e->getMessage());
+
+                return response()->json([
+                    'status'  => 500,
+                    'theme'   => 'error',
+                    'message' => 'An error occurred while updating the user.',
+                ]);
             }
         }
-        return response()->json([
-            'status'  => 200,
-            'data'    => $user,
-            'theme'   => 'success',
-            'message' => 'User Updated',
-        ]);
     }
 
     /**

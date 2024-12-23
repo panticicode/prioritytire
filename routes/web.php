@@ -13,6 +13,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'dashboard', 'as' => 'dashbo
     Route::resource('users', UsersController::class, ['except' => ['create', 'edit']]);
     Route::delete('/users/{ids}/bulk', [UsersController::class, 'bulk_delete']);
     Route::resource('permissions', PermissionsController::class);
+    Route::delete('/permissions/{ids}/bulk', [PermissionsController::class, 'bulk_delete']);
 });
 
 Auth::routes(['register' => false]);

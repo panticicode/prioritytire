@@ -13,7 +13,7 @@ class UsersTableSeeder extends Seeder
      */
     public function run(): void
     {
-        User::truncate();
+        User::query()->delete();
 
         $admin = User::create([
             'name'     => USER::ADMIN,

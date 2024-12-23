@@ -30,9 +30,9 @@ const csrf = () => {
     })
 } 
 
-const addItem = (button, form, text) => {
+const addItem = (fields, button, form, text) => {
     $(button).on("click", () => {
-        setValue({name: "", email: "", password: ""}, "create")
+        setValue(fields, "create")
         $("#addEditItemForm").attr("action", window.location.href)
         $("#addEditItemModal .modal-title").text(text)
     })
@@ -53,7 +53,7 @@ const viewItem = (button, template) => {
         csrf()
         
         $.get(url, (res) => {
-            setValue({name: res.name, email: res.email}, "view")
+            setValue(res, "view")
         })
     })
 }
@@ -68,9 +68,9 @@ const editItem = (button, form, text) => {
         csrf()
         
         $.get(url, (res) => {
-
-            setValue({name: res.name, email: res.email, password: "", _method: "PUT"}, "edit")
-
+            const response = { ...res, _method: "PUT" }
+            setValue(response, "edit")
+            
             $("#addEditItemModal .modal-title").text(text)
 
             $("#addEditItemForm").attr("action", `${url}`)
@@ -107,9 +107,9 @@ const submitForm = (table, form) => {
             {
                 $("#addEditItemModal").modal("hide")
 
-                var recordId = res.data.id
-  
-                var row = table.row(function(idx, data, node) {
+                const recordId = res.data[1]
+               
+                const row = table.row(function(idx, data, node) {
                     return data[1] == recordId 
                 })
 
@@ -117,24 +117,12 @@ const submitForm = (table, form) => {
               
                 if (state.mode === "edit") 
                 {
-                    row.data([
-                        res.data.checkbox,
-                        res.data.id,
-                        res.data.name,
-                        res.data.email,
-                        res.data.action,
-                    ])
+                    row.data(res.data)
                 }
                 else
                 {
-                    table.row.add([
-                        res.data.checkbox,
-                        res.data.id,
-                        res.data.name,
-                        res.data.email,
-                        res.data.action,
-                    ]).draw(false)
-
+                    table.row.add(res.data).draw(false)
+              
                     if($("#bulk").prop("disabled"))
                     {
                         $("#bulk").removeAttr("disabled")
