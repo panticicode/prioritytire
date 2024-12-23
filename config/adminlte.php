@@ -528,16 +528,6 @@ return [
                     'location' => 'vendor/datatables-plugins/jszip/jszip.min.js',
                 ],
                 [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => 'vendor/datatables-plugins/pdfmake/pdfmake.min.js',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => 'vendor/datatables-plugins/pdfmake/vfs_fonts.js',
-                ],
-                [
                     'type' => 'css',
                     'asset' => true,
                     'location' => 'vendor/datatables-plugins/buttons/css/buttons.bootstrap4.min.css',
@@ -545,19 +535,19 @@ return [
             ],
             'actions' => [
                 'buttons' => [
+                    'view'   => '
+                        <button class="btn btn-xs btn-default text-teal mx-1 shadow view-item" title="View">
+                           <i class="fa fa-lg fa-fw fa-eye"></i>
+                        </button>
+                    ',
                     'edit'  => '
-                        <button class="btn btn-xs btn-default text-primary mx-1 shadow" title="Edit">
+                        <button class="btn btn-xs btn-default text-primary mx-1 shadow edit-item" title="Edit">
                             <i class="fa fa-lg fa-fw fa-pen"></i>
                         </button>
                     ',
                     'delete' => '
-                        <button class="btn btn-xs btn-default text-danger mx-1 shadow" title="Delete">
+                        <button class="btn btn-xs btn-default text-danger mx-1 shadow delete-item" title="Delete">
                             <i class="fa fa-lg fa-fw fa-trash"></i>
-                        </button>
-                    ',
-                    'view'   => '
-                        <button class="btn btn-xs btn-default text-teal mx-1 shadow" title="Details">
-                           <i class="fa fa-lg fa-fw fa-eye"></i>
                         </button>
                     '
                 ]
@@ -592,9 +582,14 @@ return [
             'active' => false,
             'files' => [
                 [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11.15.2/dist/sweetalert2.min.css',
+                ],
+                [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11.15.2/dist/sweetalert2.all.min.js',
                 ],
             ],
         ],
@@ -610,6 +605,21 @@ return [
                     'type' => 'js',
                     'asset' => false,
                     'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js',
+                ],
+            ],
+        ],
+        'Toastr' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css',
                 ],
             ],
         ],

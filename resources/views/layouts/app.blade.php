@@ -14,12 +14,28 @@
     .nav-sidebar ul.nav-treeview li.nav-item a.nav-link {
         width: 96%;
     }
+    .swal2-custom-title {
+        padding: 5px .9em 0;
+        text-align: left;
+    }
+    .swal2-custom-label {
+        display: flex;
+        justify-content: start;
+    }
+    .swal2-custom-input {
+        display: flex;
+        margin: .5em 0 3px;
+        width: 100%;
+    }
     </style>
 @endpush
 
 {{-- Extend and customize the page content header --}}
 
 @section('content_header')
+    @hasSection('alerts')
+        @yield('alerts')
+    @endif
     @hasSection('content_header_title')
         <h1 class="text-muted">
             @yield('content_header_title')
@@ -57,12 +73,32 @@
 {{-- Add common Javascript/Jquery code --}}
 
 @push('js')
+<script src="{{ asset('js/functions.js') }}"></script>
 <script>
+$(() => {
+    const button = `
+        <x-adminlte-button 
+            id="addItem" 
+            class="btn-sm mb-1" 
+            theme="success" 
+            title="Add Item"
+            icon="fa fa-plus"
+            data-toggle="modal" 
+            data-target="#addEditItemModal" 
+        />
 
-    $(() => {
-        // confirm('yes')
-    })
+        <x-adminlte-button 
+            id="deleteBulk" 
+            class="btn-sm mb-1 d-none" 
+            theme="danger" 
+            title="Delete Items"
+            icon="fa fa-trash"
+        />
+    `.replace(/\s+/g, ' ').trim()
+    
+    $('.dataTables_filter label').append(button)
 
+    $(".buttons-print").remove()
+})
 </script>
 @endpush
-

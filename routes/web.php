@@ -10,7 +10,8 @@ Route::get('/', [MainController::class, 'home'])->name('home');
 
 Route::group(['middleware' => ['auth'], 'prefix' => 'dashboard', 'as' => 'dashboard.'], function(){
     Route::get('/', [MainController::class, 'dashboard'])->name('dashboard');
-    Route::resource('users', UsersController::class);
+    Route::resource('users', UsersController::class, ['except' => ['create', 'edit']]);
+    Route::delete('/users/{ids}/bulk', [UsersController::class, 'bulk_delete']);
     Route::resource('permissions', PermissionsController::class);
 });
 
