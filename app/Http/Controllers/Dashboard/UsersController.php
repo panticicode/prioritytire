@@ -19,6 +19,15 @@ class UsersController extends Controller
     protected $user;
     protected $config;
 
+    /**
+     * Constructor for the class.
+     * This constructor applies middleware that checks if the user is authenticated.
+     * If the user is authenticated, it sets the `$user` property to the authenticated user and
+     * loads the configuration into the `$config` property.
+     *
+     * @return void
+     */
+
     public function __construct()
     {
         $this->middleware(function ($request, $next){
@@ -31,6 +40,18 @@ class UsersController extends Controller
             return $next($request);
         });
     }
+
+    /**
+     * Generate configuration for user listing table.
+     * This method fetches columns from the 'users' table, formats them based on a predefined list, 
+     * and returns a configuration array that includes table headers, user data, and specific column options.
+     *
+     * The method also checks user permissions and adjusts the configuration to include or exclude 
+     * actions like view, edit, or delete based on the user's gate permissions.
+     *
+     * @return array The configuration array used to render the user listing.
+     */
+
     protected function config()
     {
         $columns = DB::getSchemaBuilder()->getColumnListing('users');
@@ -104,9 +125,17 @@ class UsersController extends Controller
         }
         return $config;
     }
+    
     /**
-     * Display a listing of the resource.
+     * Display a listing of the users.
+     * This method checks if the current user has access to the 'users_access' permission.
+     * If access is denied, it aborts with a 403 Forbidden response.
+     * It retrieves the user listing configuration and the current authenticated user,
+     * then returns a view to display the user listing with the necessary data.
+     *
+     * @return \Illuminate\View\View The view displaying the user listing with the configuration and user data.
      */
+
     public function index()
     {   
         abort_if(Gate::denies('users_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -114,9 +143,19 @@ class UsersController extends Controller
         $user   = $this->user;
         return view('dashboard/users/index', compact('config', 'user'));
     }
+
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created user in the database.
+     * 
+     * This method handles the creation of a new user. It checks if the request is an AJAX request, validates the data, hashes the password,
+     * and creates the user in the database. If the creation is successful, a JSON response with the user data is returned.
+     * In case of failure, an error response is sent back with an appropriate message.
+     *
+     * @param \App\Http\Requests\CreateUserRequest $request The incoming request containing user data.
+     * 
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the status, data, and message.
      */
+
     public function store(CreateUserRequest $request)
     {
         if($request->ajax())
@@ -153,8 +192,17 @@ class UsersController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified user and their associated permissions.
+     * 
+     * This method checks if the request is an AJAX request and then retrieves the user and their permissions. 
+     * It returns the user data along with the associated permissions in the response.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request.
+     * @param \App\Models\User $user The user to be displayed.
+     * 
+     * @return array The user data and associated permissions.
      */
+
     public function show(Request $request, User $user)
     {
         if($request->ajax())
@@ -181,8 +229,18 @@ class UsersController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified user in the database.
+     * 
+     * This method handles the update of an existing user. It checks if the request is an AJAX request, validates the data,
+     * updates the user's details, and returns a JSON response with the updated user data. If the user password is provided, it is hashed.
+     * In case of failure, an error response is returned.
+     *
+     * @param \App\Http\Requests\UpdateUserRequest $request The incoming request containing updated user data.
+     * @param \App\Models\User $user The user to be updated.
+     * 
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the status, updated data, and message.
      */
+
     public function update(UpdateUserRequest $request, User $user)
     {
         if($request->ajax())
@@ -227,8 +285,16 @@ class UsersController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified user from the database.
+     * 
+     * This method handles the deletion of a user from the database. It attempts to delete the user and returns a JSON response
+     * indicating whether the operation was successful. If an error occurs, an error message is returned.
+     *
+     * @param \App\Models\User $user The user to be deleted.
+     * 
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the status and message of the operation.
      */
+
     public function destroy(User $user)
     {
         try {
@@ -249,6 +315,17 @@ class UsersController extends Controller
         }
     }
 
+    /**
+     * Bulk delete users from the database.
+     * 
+     * This method handles the bulk deletion of users based on the provided user IDs. It iterates through the users and deletes
+     * each one. If the operation is successful, a success message is returned; otherwise, an error message is provided.
+     *
+     * @param string $ids A comma-separated string of user IDs to be deleted.
+     * 
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the status and message of the bulk delete operation.
+     */
+    
     public function bulk_delete($ids)
     {
         try {

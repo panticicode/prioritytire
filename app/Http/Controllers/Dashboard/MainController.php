@@ -10,9 +10,13 @@ use Auth;
 class MainController extends Controller
 {
     protected $adminlte;
+    
     /**
-     * Create a new controller instance.
+     * Constructor for the controller.
+     * This middleware ensures that the user is authenticated before accessing the controller's methods.
+     * It also initializes the `$adminlte` property with the provided AdminLte instance.
      *
+     * @param AdminLte $adminlte The AdminLte instance used to manage the admin panel layout and menu.
      * @return void
      */
     public function __construct(AdminLte $adminlte)
@@ -21,6 +25,12 @@ class MainController extends Controller
         $this->adminlte = $adminlte;
     }
 
+    /**
+     * Show the home page.
+     * Redirects to the login page if the user is not authenticated.
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Contracts\Support\Renderable
+     */
     public function home()
     {
         if (!Auth::check()) 
@@ -31,6 +41,7 @@ class MainController extends Controller
     }
     /**
      * Show the application dashboard.
+     * It retrieves the sidebar menu and dynamically adds a new item to the submenu if "Imported Data" is found.
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
