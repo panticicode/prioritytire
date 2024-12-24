@@ -326,7 +326,8 @@ const deleteBulkItem = (table) => {
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
-            confirmButtonText: "Delete All"
+            confirmButtonText: "Yes",
+            cancelButtonText: "No"
         })
         .then((result) => {
             if (result.value) 

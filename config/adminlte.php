@@ -299,7 +299,7 @@ return [
     */
 
     'menu' => [
-        // Navbar items:
+        //Navbar items:
         [
             'type' => 'navbar-search',
             'text' => 'search',
@@ -311,18 +311,20 @@ return [
         ],
         // Sidebar items:
         [
-            'text' => 'User Management',
-            'icon' => 'fas fa-users-cog',
+            'text'    => 'User Management',
+            'icon'    => 'fas fa-users-cog',
             'submenu' => [
                 [
                     'text'    => 'users',
-                    'url'     => 'dashboard/users',
+                    'route'   => 'dashboard.users.index',
+                    'can'     => 'users_access',
                     'icon'    => 'fas fa-users',
                     'classes' => 'ml-2',
                 ],
                 [
                     'text'    => 'permissions',
-                    'url'     => 'dashboard/permissions',
+                    'route'   => 'dashboard.permissions.index',
+                    'can'     => 'permissions_access',
                     'icon'    => 'fas fa-user-shield',
                     'classes' => 'ml-2',
                 ],
@@ -330,12 +332,14 @@ return [
         ],
         [
             'text' => 'Data import',
-            'url' => '#',
+            'url'  => '#',
+            'can'  => 'data_import_access',
             'icon' => 'fas fa-file-import',
         ],
         [
-            'text' => 'Imported Data',
-            'icon' => 'fas fa-chart-line',
+            'text'    => 'Imported Data',
+            'icon'    => 'fas fa-chart-line',
+            'can'     => 'imported_data_access',
             'submenu' => [
                 [
                     'text' => 'Item 1',
@@ -353,7 +357,8 @@ return [
         ],
         [
             'text' => 'Imports',
-            'url' => '#',
+            'url'  => '#',
+            'can'  => 'imports_access',
             'icon' => 'fas fa-cubes',
         ],
     ],
@@ -401,6 +406,7 @@ return [
     //     [
     //         'text' => 'multilevel',
     //         'icon' => 'fas fa-fw fa-share',
+    //         'can' => 'user_management_access',
     //         'submenu' => [
     //             [
     //                 'text' => 'level_one',
@@ -545,8 +551,8 @@ return [
             ],
             'actions' => [
                 'buttons' => [
-                    'view'   => '
-                        <button class="btn btn-xs btn-default text-teal mx-1 shadow view-item" title="View">
+                    'show'   => '
+                        <button class="btn btn-xs btn-default text-teal mx-1 shadow show-item" title="View">
                            <i class="fa fa-lg fa-fw fa-eye"></i>
                         </button>
                     ',

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Gate;
 
 class User extends Authenticatable
 {
@@ -58,16 +59,29 @@ class User extends Authenticatable
         return $checkbox;
     }
 
-    public function getActionAttribute() {
-        $button = array_map('trim', config('adminlte.plugins.Datatables.actions.buttons'));
+    public function getActionAttribute(): string
+    {
+        $configButtons = array_map('trim', config('adminlte.plugins.Datatables.actions.buttons'));
 
-        $viewButton   = str_replace("<button", "<button data-id='$this->id'", $button['view']);
-        $editButton   = str_replace('<button', "<button data-id='$this->id'", $button['edit']);
-        $deleteButton = str_replace('<button', "<button data-id='$this->id'", $button['delete']);
-        
-        $action = '<nobr>' . $viewButton . $editButton . $deleteButton . '</nobr>';
-        
+        $buttons = [
+            'show'   => $this->generateButton('user_show', $configButtons['show']),
+            'edit'   => $this->generateButton('user_edit', $configButtons['edit']),
+            'delete' => $this->generateButton('user_delete', $configButtons['delete']),
+        ];
+
+        $action = '<nobr>' . implode('', $buttons) . '</nobr>';
+
         return preg_replace('/\s+/', ' ', trim($action));
+    }
+
+    protected function generateButton(string $permission, string $buttonTemplate): string
+    {
+        if (!Gate::check($permission)) 
+        {
+            return '';
+        }
+
+        return str_replace('<button', "<button data-id='$this->id'", $buttonTemplate);
     }
 
     public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -75,5 +89,10 @@ class User extends Authenticatable
         return $this->belongsToMany(Permission::class, 'user_permissions')
                                         ->using(UserPermission::class)
                                         ->withTimestamps();
+    }
+
+    public function hasUserPermission($permissionKey)
+    {   
+        return $this->permissions()->where('key', $permissionKey)->exists();
     }
 }
