@@ -19,6 +19,13 @@ class PermissionsController extends Controller
     protected $user;
     protected $config;
 
+    /**
+     * Constructor for the controller.
+     * This middleware checks if the user is authenticated and sets the `$user` and `$config` properties.
+     *
+     * @return void
+     */
+
     public function __construct()
     {
         $this->middleware(function ($request, $next){
@@ -31,6 +38,15 @@ class PermissionsController extends Controller
             return $next($request);
         });
     }
+
+    /**
+     * Generate configuration for displaying permissions table.
+     * This method fetches the columns of the 'permissions' table, formats them, and creates a table configuration
+     * for displaying the data. It also applies user permissions and dynamically adjusts the columns based on available permissions.
+     *
+     * @return array Configuration array for permissions table.
+     */
+
     protected function config()
     {
         $columns = DB::getSchemaBuilder()->getColumnListing('permissions');
@@ -114,6 +130,15 @@ class PermissionsController extends Controller
         return $config;
     }
     
+    /**
+     * Generate configuration for displaying users table with permission options.
+     * This method fetches the columns of the 'users' table, formats them, and creates a table configuration
+     * for displaying user data. It also adjusts for bulk permission assignment or removal, and includes necessary access controls.
+     *
+     * @param string $params Parameter used to differentiate between bulk assignment and removal of permissions.
+     * @return array Configuration array for users table.
+     */
+
     protected function users($params)
     {
         abort_if(Gate::denies('permissions_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -181,8 +206,12 @@ class PermissionsController extends Controller
 
         return $config;
     }
+    
     /**
      * Display a listing of the resource.
+     * This method combines the configuration for permissions and users, and passes it to the view for rendering.
+     *
+     * @return \Illuminate\View\View The view for displaying the permissions index page with the configured data.
      */
     public function index()
     {
@@ -193,8 +222,14 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created permission in storage.
+     * This method handles the creation of a new permission via an AJAX request, returning a JSON response
+     * indicating success or failure. It includes the permission details in the response.
+     *
+     * @param CreatePermissionRequest $request The request containing the necessary data to create a permission.
+     * @return \Illuminate\Http\JsonResponse The JSON response with the status, message, and data.
      */
+
     public function store(CreatePermissionRequest $request)
     {
         if($request->ajax())
@@ -229,8 +264,15 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified permission resource.
+     * This method retrieves and returns the details of a specified permission and the associated users who have the permission.
+     * The data is returned in a JSON format for AJAX requests.
+     *
+     * @param Request $request The incoming request.
+     * @param Permission $permission The permission instance to display.
+     * @return array The response containing the permission details and users.
      */
+
     public function show(Request $request, Permission $permission)
     {
         if($request->ajax())
@@ -259,8 +301,15 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified permission resource in storage.
+     * This method handles the updating of an existing permission via an AJAX request, returning a JSON response
+     * indicating success or failure. The updated permission data is included in the response.
+     *
+     * @param UpdatePermissionRequest $request The request containing the data to update the permission.
+     * @param Permission $permission The permission instance to update.
+     * @return \Illuminate\Http\JsonResponse The JSON response with the status, message, and data.
      */
+
     public function update(UpdatePermissionRequest $request, Permission $permission)
     {
         if($request->ajax())
@@ -299,8 +348,14 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified permission from storage.
+     * This method handles the deletion of a specified permission via an AJAX request, returning a JSON response
+     * indicating success or failure.
+     *
+     * @param Permission $permission The permission instance to delete.
+     * @return \Illuminate\Http\JsonResponse The JSON response with the status and message of the operation.
      */
+
     public function destroy(Permission $permission)
     {
         try {
@@ -320,6 +375,18 @@ class PermissionsController extends Controller
             ]);
         }
     }
+
+    /**
+     * Handle the action of attaching or detaching users to a permission.
+     * This method checks if the selected action is to attach or detach the permission to/from users,
+     * performs the action, and returns a response with the operation status and message.
+     *
+     * @param Permission $permission The permission to be assigned or removed from users.
+     * @param array $existingUsers The users who already have the permission.
+     * @param array $userIds The IDs of the users to be assigned or removed from the permission.
+     * @param string $action The action to perform: either 'attach' or 'detach'.
+     * @return \Illuminate\Http\Response The response with the status and message.
+     */
 
     private function handleAction($permission, $existingUsers, $userIds, $action)
     {
@@ -365,10 +432,32 @@ class PermissionsController extends Controller
         ];
     }
 
+    /**
+     * Perform the actual action of attaching or detaching users to/from the permission.
+     * This method attaches or detaches the users from the permission based on the action provided.
+     *
+     * @param Permission $permission The permission to which users will be attached or detached.
+     * @param array $newUserIds The IDs of the users to be attached or detached.
+     * @param string $action The action to perform: either 'attach' or 'detach'.
+     * @return void
+     */
+
     private function performAction($permission, $newUserIds, $action)
     {
         $permission->users()->$action($newUserIds);
     }
+
+    /**
+     * Handle the bulk assignment or removal of permissions for users.
+     * This method processes the assignment or removal of permissions to users in bulk.
+     * It iterates over the permissions and calls handleAction for each permission.
+     *
+     * @param string $user_ids A comma-separated list of user IDs.
+     * @param string $permission_ids A comma-separated list of permission IDs.
+     * @param string $action The action to perform: either 'attach' or 'detach'.
+     * @return \Illuminate\Http\JsonResponse The response with the status, theme, and message.
+     */
+
     public function handle_user_permissions($user_ids, $permission_ids, $action)
     {
         try {
@@ -401,6 +490,14 @@ class PermissionsController extends Controller
         }
     }
 
+    /**
+     * Perform a bulk delete operation for selected permissions.
+     * This method deletes the permissions specified by their IDs in bulk.
+     *
+     * @param string $ids A comma-separated list of permission IDs to delete.
+     * @return \Illuminate\Http\Response The response with the status and message.
+     */
+    
     public function bulk_delete($ids)
     {
         try {

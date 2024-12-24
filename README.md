@@ -1,67 +1,226 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PriorityTire Setup
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This guide will show you how to set up and run this mini project build with Laravel.
 
-## About Laravel
+### Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- For **Linux**, you need to have Apache or Nginx installed along with PHP.
+- For **Windows**, you need to have WAMP installed, which comes with Apache, PHP, and MySQL.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Basic Setup
 
-## Learning Laravel
+## Step 1: Clone the Repository
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+To get started, clone the repository using one of the following methods:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Using HTTPS:
+```bash
+git clone https://github.com/panticicode/prioritytire.git
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Using SSH (if set up):
 
-## Laravel Sponsors
+```bash 
+git clone git@github.com:panticicode/prioritytire.git
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Alternatively:
 
-### Premium Partners
+You can download the repository as a ZIP file from GitHub, extract it, and place it in your web server directory.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Step 2: Place the Files
 
-## Contributing
+```bash
+Linux: Move the files to /var/www/html/prioritytire/
+Windows: Extract or move the files to C:\wamp64\www\prioritytire\.
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Step 3: Access the File
 
-## Code of Conduct
+```bash 
+- **Linux**: `/var/www/html/prioritytire/*`
+- **Windows**: `C:\wamp64\www\prioritytire\*`
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Step 2: Install Dependencies
 
-## Security Vulnerabilities
+Navigate to the cloned directory and install the required dependencies using Composer:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+cd prioritytire
+composer install
+```
+### Step 3: Configure the Environment
 
-## License
+1. Copy the example environment file:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# prioritytire
+```bash
+cp .env.dev .env
+```
+
+2. Generate an application key:
+```bash
+php artisan key:generate
+```
+
+3. Edit the .env file to configure your database and other settings as needed. 
+
+### Step 4: Set Up the Database
+
+Run the following commands to migrate your database and run seeders:
+
+```bash
+php artisan migrate --seed
+```
+
+### Running the Application with php artisan serve
+
+Laravel comes with a built-in development server, which you can use for quick testing and development. Here’s how to use it:
+
+```bash
+php artisan serve
+```
+
+### Access the Application
+
+- Access your application at http://localhost:8000
+
+Notes: If port 8000 is already in use, you can specify a different port using the --port option:
+
+```bash
+php artisan serve --port=8080
+```
+
+Then, access your application at http://localhost:8080.
+
+Development Only: Note that php artisan serve is intended for development purposes only. For production, it's recommended to use a proper web server like Apache or Nginx.
+
+
+## Advanced Setup
+
+### Running the Application on Linux
+
+### Apache Setup
+
+- Install Apache and PHP: If Apache and PHP are not installed yet, run:
+
+```bash
+sudo apt update
+sudo apt install apache2 php libapache2-mod-php php-xml php-mbstring
+```
+
+- Set up your application: Place your application in /var/www/html/prioritytire/.
+- Set permissions:
+
+```bash
+sudo chown -R www-data:www-data /var/www/html/prioritytire
+sudo chmod -R 755 /var/www/html/prioritytire/storage
+```
+- Restart Apache:
+
+```bash
+sudo service apache2 restart
+```
+
+### Nginx Setup
+
+```bash
+sudo apt update
+sudo apt install nginx php-fpm
+```
+
+- Configure Host: Edit your host file:
+
+```bash
+sudo nano /etc/hosts
+```
+with this line
+
+```bash
+127.0.0.1 prioritytire.local
+```
+
+- save the file
+
+- Configure Nginx: Create the Nginx configuration file (e.g., /etc/nginx/sites-available/prioritytire) to include:
+
+```bash
+sudo nano /etc/nginx/sites-available/prioritytire
+```
+
+and paste following code 
+
+```bash
+server {
+    listen 80;
+    server_name prioritytire.local www.prioritytire.local;
+
+    root /var/www/html/prioritytire/public;
+    index index.html index.htm index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;  # Change PHP version if necessary
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+
+- save the file
+
+### Set permissions:
+
+```bash
+sudo chown -R www-data:www-data /var/www/html/prioritytire
+sudo chmod -R 755 /var/www/html/prioritytire/storage
+```
+
+### Restart Nginx
+
+```bash
+sudo systemctl restart nginx
+```
+
+### Running the Application on Windows
+
+- Install WAMP: Download and install WAMP from [here](https://sourceforge.net/projects/wampserver).
+- Place your application: Move your application to C:\wamp64\www\prioritytire\
+- Start WAMP: Launch WAMP, and ensure the server is running (look for a green icon in the system tray).
+- Access the application: Open your browser and navigate to:
+
+
+### Access the Application
+
+- Access your application at http://prioritytire.local
+
+### Troubleshooting
+
+## Linux
+
+- 403 Forbidden Error: Ensure that permissions are correct:
+
+```bash
+sudo chown -R www-data:www-data /var/www/html/prioritytire
+sudo chmod -R 755 /var/www/html/prioritytire/storage
+```
+
+- Apache Not Serving PHP: Ensure PHP is installed and restart Apache.
+- Nginx Not Serving PHP: Ensure that the PHP-FPM service is running and the socket path in the Nginx configuration is correct.
+
+## Windows
+
+- WAMP Not Running: Make sure WAMP is started and check the icon in the system tray. If it's not green, check for port conflicts (usually with port 80).
+
+### Conclusion
+
+Follow the appropriate steps for your operating system to run the minimal Laravel application. If you encounter issues, check the permissions, configuration files, and ensure the necessary services are running.
