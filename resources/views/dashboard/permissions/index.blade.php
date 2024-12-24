@@ -19,7 +19,7 @@
 
 @section('content_body')
 <x-adminlte-datatable id="permissionsTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
-    striped hoverable with-buttons/>
+    striped hoverable :with-buttons="$config['with-buttons']"/>
 
 <x-adminlte-modal id="addEditItemModal" title="Add Permission" v-centered>
     <form id="addEditItemForm" method="POST">
@@ -76,7 +76,7 @@
     </div>
 </x-adminlte-modal>
 
-<template id="view-item-template">
+<template id="show-item-template">
     <swal-title>
         Permission details
     </swal-title>
@@ -106,42 +106,38 @@
 
 @push('js')
 <script>
-const buttons = `
-    <x-adminlte-button 
-        id="addItem" 
-        class="btn-sm mb-1 ml-1" 
-        theme="success" 
-        title="Add Permission"
-        icon="fa fa-user-plus"
-        data-toggle="modal" 
-        data-target="#addEditItemModal" 
-    />
-    <x-adminlte-button 
-        id="assignPermission" 
-        class="btn-sm mb-1 d-none" 
-        theme="primary" 
-        title="Asign Permission"
-        icon="fas fa-user-shield"
-        data-toggle="modal" 
-        data-target="#assignPermissionModal" 
-    />
-    <x-adminlte-button 
-        id="removePermission" 
-        class="btn-sm mb-1 d-none" 
-        theme="warning" 
-        title="Remove Permission"
-        icon="fas fa-user-lock"
-        data-toggle="modal" 
-        data-target="#removePermissionModal" 
-    />
-    <x-adminlte-button 
-        id="deleteBulk" 
-        class="btn-sm mb-1 d-none" 
-        theme="danger" 
-        title="Delete Permissions"
-        icon="fa fa-trash"
-    />
-`.replace(/\s+/g, " ").trim()
+const checkPermissions = {
+    permission_create: {{ json_encode(Gate::check('permission_create')) }},
+    permission_assign: {{ json_encode(Gate::check('permission_assign')) }},
+    permission_remove: {{ json_encode(Gate::check('permission_remove')) }},
+    permission_delete: {{ json_encode(Gate::check('permission_delete')) }}, 
+}      
+const generateButtons = (permission, id, hidden, theme, title, icon, modalId) => {
+
+    if(checkPermissions[permission])
+    {
+        return `    
+            <x-adminlte-button 
+                id="${id}" 
+                class="btn-sm mb-1 ml-1 ${hidden}" 
+                theme="${theme}" 
+                title="${title}"
+                icon="${icon}"
+                data-toggle="modal" 
+                data-target="#${modalId}" 
+            />
+        `
+    }
+
+    return ''
+} 
+
+const addBtn        = generateButtons('permission_create', 'addItem', null, 'success', 'Add Permission', 'fa fa-user-plus', 'addEditItemModal')
+const assignBtn     = generateButtons('permission_assign', 'assignPermission', 'd-none', 'primary', 'Assign Permission', 'fas fa-user-shield', 'assignPermissionModal')
+const removeBtn     = generateButtons('permission_remove', 'removePermission', 'd-none', 'warning', 'Remove Permission', 'fas fa-user-lock', 'removePermissionModal')
+const deleteBulkBtn = generateButtons('permission_delete', 'deleteBulk', 'd-none', 'danger', 'Delete Permissions', 'fa fa-trash', 'deleteBulkModal')
+
+const buttons = addBtn + assignBtn + removeBtn + deleteBulkBtn
 
 $(() => {
     
@@ -154,7 +150,7 @@ $(() => {
 
     addItem(fields, "#addItem", "#addEditItemForm", "Add Permission")
 
-    viewItem(".view-item", "#view-item-template")
+    viewItem(".show-item", "#show-item-template")
 
     editItem(".edit-item", "#addEditItemForm", "Edit Permission")
 

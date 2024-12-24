@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Dashboard\Users\CreateUserRequest;
 use App\Http\Requests\Dashboard\Users\UpdateUserRequest;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use App\Models\User;
 use Auth;
+use Gate;
 use DB;
 
 class UsersController extends Controller
@@ -59,7 +61,7 @@ class UsersController extends Controller
         ];
 
         $heads = array_values(array_filter($formattedColumns));
-        
+       
         $users = User::whereNotNull('parent_id')
                         ->where('id', '!=', $this->user->id)
                         ->select('id', 'name', 'email', 'created_at')->get();
@@ -92,8 +94,14 @@ class UsersController extends Controller
                     ['orderable' => false], 
                 ]
             ),
+            'with-buttons' => Gate::check('users_export') ? 'with-buttons' : null
         ];
 
+        if(!Gate::check('user_view') && !Gate::check('user_edit') && !Gate::check('user_delete'))
+        {
+            array_pop( $config['heads'] );
+            array_pop( $config['columns'] );
+        }
         return $config;
     }
     /**
@@ -101,8 +109,10 @@ class UsersController extends Controller
      */
     public function index()
     {   
+        abort_if(Gate::denies('users_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $config = $this->config;
-        return view('dashboard/users/index', compact('config'));
+        $user   = $this->user;
+        return view('dashboard/users/index', compact('config', 'user'));
     }
     /**
      * Store a newly created resource in storage.

@@ -20,16 +20,10 @@ class PermissionsTableSeeder extends Seeder
 
         $permissions = [
             //Profile
-            [
-                'name'        => 'Auth Profile Edit',
-                'description' => 'Access to Logged in Profile. Allow / Disallow User to change their profile.',
-            ],
-            //User Management Module
-            [
-                'name'        => 'User Management Access',
-                'description' => 'Access to User Management module',
-            ],
-            
+            // [
+            //     'name'        => 'Auth Profile Edit',
+            //     'description' => 'Access to Logged in Profile. Allow / Disallow User to change their profile.',
+            // ],
             //Users Module
             [
                 'name'        => 'Users Access',
@@ -69,6 +63,14 @@ class PermissionsTableSeeder extends Seeder
                 'description' => 'Create new Permission',
             ],
             [
+                'name'        => 'Permission Assign',
+                'description' => 'Assign Permission to the User',
+            ],
+            [
+                'name'        => 'Permission Remove',
+                'description' => 'Remove Permission from the User',
+            ],
+            [
                 'name'        => 'Permission Show',
                 'description' => 'Show selected Permission',
             ],
@@ -79,7 +81,22 @@ class PermissionsTableSeeder extends Seeder
             [
                 'name'        => 'Permission Delete',
                 'description' => 'Delete Permission or selected Permissions',
-            ]
+            ],
+            //Data Import Module
+            [
+                'name'        => 'Data Import Access',
+                'description' => 'Access to Data Import',
+            ],
+            //Imported Data Module
+            [
+                'name'        => 'Imported Data Access',
+                'description' => 'Access to Imported Data',
+            ],
+            //Imports Module
+            [
+                'name'        => 'Imports Access',
+                'description' => 'Access to Imports',
+            ],
         ];
 
         $timestamp = ['created_at' => now(), 'updated_at' => now()];

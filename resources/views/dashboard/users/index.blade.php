@@ -8,8 +8,9 @@
 @section('content_header_subtitle', 'Users') 
 
 @section('content_body')
+
 <x-adminlte-datatable id="usersTable" :heads="$config['heads']" head-theme="light" theme="info" :config="$config"
-    striped hoverable with-buttons/>
+    striped hoverable :with-buttons="$config['with-buttons']" />
 
 <x-adminlte-modal id="addEditItemModal" title="Add User">
     <form id="addEditItemForm" method="POST">
@@ -43,7 +44,7 @@
     </x-slot>
 </x-adminlte-modal> 
 
-<template id="view-item-template">
+<template id="show-item-template">
     <swal-title>
         User details
     </swal-title>
@@ -77,24 +78,35 @@
 
 @push('js')
 <script>
-const buttons = `
-    <x-adminlte-button 
-        id="addItem" 
-        class="btn-sm mb-1 ml-1" 
-        theme="success" 
-        title="Add User"
-        icon="fa fa-user-plus"
-        data-toggle="modal" 
-        data-target="#addEditItemModal" 
-    />
-    <x-adminlte-button 
-        id="deleteBulk" 
-        class="btn-sm mb-1 d-none" 
-        theme="danger" 
-        title="Delete Users"
-        icon="fa fa-trash"
-    />
-`.replace(/\s+/g, ' ').trim()  
+const checkPermissions = {
+    user_create: {{ json_encode(Gate::check('user_create')) }},
+    user_delete: {{ json_encode(Gate::check('user_delete')) }}, 
+}      
+const generateButtons = (permission, id, hidden, theme, title, icon, modalId) => {
+
+    if(checkPermissions[permission])
+    {
+        return `    
+            <x-adminlte-button 
+                id="${id}" 
+                class="btn-sm mb-1 ml-1 ${hidden}" 
+                theme="${theme}" 
+                title="${title}"
+                icon="${icon}"
+                data-toggle="modal" 
+                data-target="#${modalId}" 
+            />
+        `
+    }
+
+    return ''
+} 
+
+const addBtn        = generateButtons('user_create', 'addItem', null,  'success', 'Add User', 'fa fa-user-plus', 'addEditItemModal')
+
+const deleteBulkBtn = generateButtons('user_delete', 'deleteBulk', 'd-none', 'danger', 'Delete Users', 'fa fa-trash', 'deleteBulkModal')
+
+const buttons = addBtn + deleteBulkBtn
 
 $(() => {
     
@@ -108,7 +120,7 @@ $(() => {
 
     addItem(fields, "#addItem", "#addEditItemForm", "Add User")
 
-    viewItem(".view-item", "#view-item-template")
+    viewItem(".show-item", "#show-item-template")
 
     editItem(".edit-item", "#addEditItemForm", "Edit User")
 

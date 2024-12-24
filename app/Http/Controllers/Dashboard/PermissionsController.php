@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Dashboard\Permissions\CreatePermissionRequest;
 use App\Http\Requests\Dashboard\Permissions\UpdatePermissionRequest;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use App\Models\Permission;
 use App\Models\User;
 use Auth;
+use Gate;
 use DB;
 
 class PermissionsController extends Controller
@@ -100,13 +102,22 @@ class PermissionsController extends Controller
                     ['orderable' => false], 
                 ]
             ),
+            'with-buttons' => $this->user->can('permissions_export') ? 'with-buttons' : null
         ];
+
+        if(!Gate::check('permission_view') && !Gate::check('permission_edit') && !Gate::check('permission_delete'))
+        {
+            array_pop( $config['heads'] );
+            array_pop( $config['columns'] );
+        }
 
         return $config;
     }
     
     protected function users($params)
     {
+        abort_if(Gate::denies('permissions_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
         $columns = DB::getSchemaBuilder()->getColumnListing('users');
 
         $columnsToFormat = ['id', 'name', 'email'];
@@ -345,13 +356,13 @@ class PermissionsController extends Controller
 
         $this->performAction($permission, $newUserIds, $action);
 
-        return response([
+        return [
             'status'    => 200,
             'data'      => $this->config(),
             'operation' => $operation,
             'theme'     => 'success',
             'message'   => $message
-        ]);
+        ];
     }
 
     private function performAction($permission, $newUserIds, $action)
@@ -375,9 +386,10 @@ class PermissionsController extends Controller
 
                 $newUserIds = array_diff($userIds, $existingUsers);
 
-                return $this->handleAction($permission, $existingUsers, $userIds, $action);
-
+                $response = $this->handleAction($permission, $existingUsers, $userIds, $action);
             }
+
+            return response()->json($response);
 
         } catch (Exception $e) {
              \Log::error('Assign Permissions failed: ' . $e->getMessage());

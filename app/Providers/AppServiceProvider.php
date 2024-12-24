@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //$users = User::all();
-        //config(['adminlte.users' => $users]);
+        Gate::before(function ($user, $ability) {
+            return $user->hasUserPermission($ability);
+        });
     }
 }
