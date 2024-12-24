@@ -50,6 +50,8 @@ class Permission extends Model
     ];
     public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'user_permissions');
+        return $this->belongsToMany(User::class, 'user_permissions')
+                                        ->using(UserPermission::class)
+                                        ->withTimestamps();
     }
 }

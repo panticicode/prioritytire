@@ -53,7 +53,7 @@
             Select the users who will be assigned the selected permission(s).
         </p>
 
-        <x-adminlte-datatable id="assignUserPermissionsTable" :heads="$users['heads']" :config="$users" theme="info" striped hoverable/>
+        <x-adminlte-datatable id="assignUserPermissionsTable" :heads="$assignPermissions['heads']" :config="$assignPermissions" theme="info" striped hoverable/>
 
         <x-slot name="footerSlot">
             <x-adminlte-button id="assignUserPermission" theme="primary" label="Assign"/>
@@ -68,7 +68,7 @@
            Select the users from whom the selected permission(s) will be removed.
         </p>
 
-        <x-adminlte-datatable id="removeUserPermissionsTable" :heads="$users['heads']" :config="$users" theme="info" striped hoverable/>
+        <x-adminlte-datatable id="removeUserPermissionsTable" :heads="$removePermissions['heads']" :config="$removePermissions" theme="info" striped hoverable/>
 
         <x-slot name="footerSlot">
             <x-adminlte-button id="removeUserPermission" theme="danger" label="Remove"/>
@@ -97,7 +97,7 @@
             </button>
             
             <div class="collapse" id="collapseUserAccordion">
-                <ul id="userList" class="list-group"></ul>
+                <ul id="lists" class="list-group"></ul>
             </div>
         </div>
     </swal-html>
@@ -162,17 +162,21 @@ $(() => {
 
     $("form input").on("keyup", handleInputValidation)    
 
-    handleCloseModals("#assignPermissionModal")
+    handleModalActions("#assignPermissionModal")
 
-    handleCloseModals("#removePermissionModal")
+    handleModalActions("#removePermissionModal")
 
     handleBulkCheckBoxes({ id: "#bulk", className: ".bulk" })
 
     handleBulkCheckBoxes({ id: "#bulkAssignPermission", className: ".bulkAssignPermission" })
 
+    handleBulkCheckBoxes({ id: "#bulkRemovePermission", className: ".bulkRemovePermission" })
+
     deleteItem(table)
 
-    assignUserPermissions(table, "#assignUserPermission")
+    handleUserPermissions(table, "#assignUserPermission", "attach")
+
+    handleUserPermissions(table, "#removeUserPermission", "detach")
 
     deleteBulkItem(table)
 

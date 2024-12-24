@@ -69,4 +69,11 @@ class User extends Authenticatable
         
         return preg_replace('/\s+/', ' ', trim($action));
     }
+
+    public function permissions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions')
+                                        ->using(UserPermission::class)
+                                        ->withTimestamps();
+    }
 }

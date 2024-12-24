@@ -105,7 +105,7 @@ class PermissionsController extends Controller
         return $config;
     }
     
-    protected function users()
+    protected function users($params)
     {
         $columns = DB::getSchemaBuilder()->getColumnListing('users');
 
@@ -136,13 +136,22 @@ class PermissionsController extends Controller
         $config = [
             'heads' => array_merge(
                 [[
-                    'label' => '<input type="checkbox" id="bulkAssignPermission" />', 
+                    'label' => '<input type="checkbox" id="'. $params .'" />', 
                     'width' => 1
                 ]], $heads
             ),
-            'data' => $users->map(function ($user) {
+            'data' => $users->map(function ($user) use ($params) {
+
+                if( $user->permissions->isEmpty() || $params === 'bulkAssignPermission' )
+                {
+                    $class   = '';
+                }
+                else
+                {
+                    $class   = ' bulkChecked'; 
+                }
                 return [
-                    '<input type="checkbox" class="bulkAssignPermission" data-id="' . $user->id . '" />', 
+                    '<input type="checkbox" class="'. $params . $class .'" data-id="' . $user->id . '" />', 
                     $user->id,
                     $user->name,
                     $user->email,
@@ -166,9 +175,10 @@ class PermissionsController extends Controller
      */
     public function index()
     {
-        $config = $this->config;
-        $users  = $this->users();
-        return view('dashboard/permissions/index', compact('config', 'users'));
+        $config             = $this->config;
+        $assignPermissions  = $this->users("bulkAssignPermission");
+        $removePermissions  = $this->users("bulkRemovePermission");
+        return view('dashboard/permissions/index', compact('config', 'assignPermissions', 'removePermissions'));
     }
 
     /**
@@ -232,7 +242,7 @@ class PermissionsController extends Controller
                     'description' => $permission->description,
                     'action'      => $permission->action
                 ],
-                'users' => $users
+                'users'    => $users
             ];
         }
     }
@@ -300,15 +310,61 @@ class PermissionsController extends Controller
         }
     }
 
-    public function assign_user_permissions($user_ids, $permission_ids)
+    private function handleAction($permission, $existingUsers, $userIds, $action)
+    {
+        if($action === 'attach')
+        {
+            $newUserIds = array_diff($userIds, $existingUsers);
+
+            if (empty($newUserIds)) 
+            {
+                return response([
+                    'status'  => 409,
+                    'theme'   => 'warning',
+                    'message' => 'Permission ' . $permission->name . ' is already assigned to the selected users.'
+                ]);
+            }
+            $message   = 'The selected permissions have been successfully assigned to the selected users.';
+            $operation = '+';
+        }
+        else
+        {
+            $newUserIds = array_intersect($userIds, $existingUsers);
+
+            if (empty($newUserIds)) 
+            {
+                return response([
+                    'status'  => 409,
+                    'theme'   => 'warning',
+                    'message' => 'Permission ' . $permission->name . ' is already removed from the selected users.'
+                ]);
+            }
+            $message   = 'The selected permissions have been successfully removed from the selected users.';
+            $operation = '-';
+        }
+
+        $this->performAction($permission, $newUserIds, $action);
+
+        return response([
+            'status'    => 200,
+            'data'      => $this->config(),
+            'operation' => $operation,
+            'theme'     => 'success',
+            'message'   => $message
+        ]);
+    }
+
+    private function performAction($permission, $newUserIds, $action)
+    {
+        $permission->users()->$action($newUserIds);
+    }
+    public function handle_user_permissions($user_ids, $permission_ids, $action)
     {
         try {
             $userIds       = explode(',', $user_ids);
             $permissionIds = explode(',', $permission_ids);
 
             $permissions   = Permission::with('users')->whereIn('id', $permissionIds)->get();
-
-            $timestamp     = ['created_at' => now(), 'updated_at' => now()];
 
             foreach($permissions as $permission)
             {
@@ -319,27 +375,9 @@ class PermissionsController extends Controller
 
                 $newUserIds = array_diff($userIds, $existingUsers);
 
+                return $this->handleAction($permission, $existingUsers, $userIds, $action);
 
-                if (!empty($newUserIds)) 
-                {
-                    $permission->users()->attach($newUserIds, $timestamp);
-                } 
-                else 
-                {
-                    return response([
-                        'status'  => 409,
-                        'theme'   => 'warning',
-                        'message' => "Permission $permission->name is already assigned to the selected users."
-                    ]);
-                }
             }
-
-            return response([
-                'status'  => 200,
-                'data'    => $this->config(),
-                'theme'   => 'success',
-                'message' => 'Selected permissions assigned successfully to selected users'
-            ]);
 
         } catch (Exception $e) {
              \Log::error('Assign Permissions failed: ' . $e->getMessage());

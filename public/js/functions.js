@@ -54,17 +54,21 @@ const viewItem = (button, template) => {
         
         $.get(url, (res) => {
             setValue(res.data, "view")
-            
-            let users = res.users.length
-                ? res.users.map(user => `
+
+            const eloquent = Object.keys(res)[1]
+            const model    = window.location.href.split("/").pop().slice(0, -1)
+
+            let lists = res[eloquent].length
+                ? res[eloquent].map(list => `
                     <li class="list-group-item text-left px-0 pb-0">
                         <i class="fas fa-circle-notch fa-xs mr-1"></i>
-                        <strong>${user.name}</strong> (${user.email})
+                        <strong>${list.name}</strong> ${eloquent === 'users' ? `(${list.email})` : ''}
                     </li>
                 `).join('')
-                : '<li class="list-group-item text-center">No users for the given permission</li>'
+                : `<li class="list-group-item text-center">No ${ eloquent } for the given ${ model }</li>`
+            
 
-            $('#userList').html(users)
+            $('#lists').html(lists)
         })
     })
 }
@@ -229,26 +233,34 @@ const deleteItem = (table) => {
     })
 }
 
-const assignUserPermissions = (table, selector) => {
+const handleUserPermissions = (table, selector, action) => {
     $(selector).on("click", (evt) => {
-        const permissionIds = $(".bulk:checked").map((i, e) => $(e).data("id")).get().join(",")
-        const userIds       = $(".bulkAssignPermission:checked").map((i, e) => $(e).data("id")).get().join(",")
 
-        const url = `${window.location.origin}/dashboard/user/${userIds}/permission/${permissionIds}/assign`
+        let checkboxes, modal
+
+        if(action === 'attach')
+        {
+            checkboxes   = "bulkAssignPermission:checked"
+            modal        = "#assignPermissionModal"
+            errorMessage = "You must select at least one record to successfully assign permission to selected users."
+        }
+        else
+        {
+            checkboxes = "bulkRemovePermission:checked"
+            modal      = "#removePermissionModal"
+            errorMessage = "You must select at least one record to successfully remove permission from selected users."
+        }
+
+        const permissionIds = $(".bulk:checked").map((i, e) => $(e).data("id")).get().join(",")
+        const userIds       = $(`.${checkboxes}`).map((i, e) => $(e).data("id")).get().join(",")
+
+        const url = `${window.location.origin}/dashboard/user/${userIds}/permission/${permissionIds}/${action}`
         
         csrf()
         $.post(url, (res) => {
-            $("#assignPermissionModal").modal("hide")
+            $(modal).modal("hide")
             showAlert(res.theme, res.message)
-            uncheckElements(".bulk:checked")
-            uncheckElements("#bulk:checked")
-            uncheckElements(".bulkAssignPermission:checked")
-            uncheckElements("#bulkAssignPermission:checked")
-
-            toggleElement("#assignPermission", false)
-            toggleElement("#removePermission", false)
-            toggleElement("#deleteBulk", false)
-
+            
             if(res.status === 200)
             {
                 const permission_ids = permissionIds.split(",").map(Number)
@@ -269,12 +281,29 @@ const assignUserPermissions = (table, selector) => {
                     if (row.length) 
                     {
                         const rowData = row.data()
-                        rowData[4] = rowData[4] + userCount 
-                        
+
+                        rowData[4] = eval(`${rowData[4]} ${res.operation} ${userCount}`)
                         row.data(rowData).draw(false)
                     }
                 })
                 
+            }
+
+            uncheckElements(".bulk:checked")
+            uncheckElements("#bulk:checked")
+            uncheckElements(`.${checkboxes}`)
+            uncheckElements(`#${checkboxes}`)
+
+            toggleElement("#assignPermission", false)
+            toggleElement("#removePermission", false)
+            toggleElement("#deleteBulk", false)
+        })
+        .fail((err) => {
+            
+            if( err.status === 404 )
+            {
+                const theme   = "warning"
+                showAlert(theme, errorMessage)
             }
         })
     })
@@ -332,8 +361,13 @@ const deleteBulkItem = (table) => {
     })
 }
 
-const handleCloseModals = (selector) => {
+const handleModalActions = (selector) => {
+    $(selector).on("show.bs.modal", () => {
+        $(selector).removeAttr('aria-hidden')
+    })
     $(selector).on("hidden.bs.modal", () => {
+        $(selector).attr('aria-hidden', 'true')
+
         uncheckElements(".bulk:checked")
         uncheckElements("#bulk:checked")
         uncheckElements(".bulkAssignPermission:checked")
@@ -435,7 +469,7 @@ const showAlert = (theme, message) => {
 	  	showCloseButton: true,
 	  	background: background,
 	  	iconColor: "#fff",
-	  	timer: null,
+	  	timer: 5000,
 	  	timerProgressBar: true,
 		didOpen: (toast) => {
 		    toast.onmouseenter = Swal.stopTimer

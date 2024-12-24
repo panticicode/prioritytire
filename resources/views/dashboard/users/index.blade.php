@@ -62,6 +62,14 @@
                   <input type="email" class="form-control" id="email">
                 </div>
             </div>
+
+            <button class="btn btn-link p-0 row d-flex" type="button" data-toggle="collapse" data-target="#collapsePermissionAccordion" aria-expanded="false" aria-controls="collapsePermissionAccordion">
+                Permissions
+            </button>
+            
+            <div class="collapse" id="collapsePermissionAccordion">
+                <ul id="lists" class="list-group"></ul>
+            </div>
         </div>
     </swal-html>
 </template>
