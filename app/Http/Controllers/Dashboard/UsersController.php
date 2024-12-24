@@ -149,6 +149,14 @@ class UsersController extends Controller
     {
         if($request->ajax())
         {
+            $permissions = $user->permissions()
+                        ->get()->map(function($permission){
+                return [
+                    'id'    => $permission->id,
+                    'name'  => $permission->name,
+                ];
+            });
+
             return [
                 'data' => [
                     'checkbox' => $user->checkbox,
@@ -156,7 +164,8 @@ class UsersController extends Controller
                     'name'     => $user->name,
                     'email'    => $user->email,
                     'action'   => $user->action
-                ]
+                ],
+                'permissions' => $permissions
             ];
         }
     }
