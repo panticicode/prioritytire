@@ -112,7 +112,7 @@ const viewItem = (button, template) => {
             const eloquent = Object.keys(res)[1]
             const model    = window.location.href.split("/").pop().slice(0, -1)
 
-            let lists = res[eloquent].length
+            let lists = res[eloquent]?.length
                 ? res[eloquent].map(list => `
                     <li class="list-group-item text-left px-0 pb-0">
                         <i class="fas fa-circle-notch fa-xs mr-1"></i>
@@ -333,7 +333,7 @@ const deleteItem = (table) => {
 	            }
 
 	            csrf()
-	            
+	         
 	            $.post(url, params, (res) => {
 	                Swal.fire({
 		              title: "Deleted!",

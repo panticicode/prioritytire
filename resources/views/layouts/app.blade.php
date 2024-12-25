@@ -47,6 +47,10 @@
                 <small class="text-dark">
                     <i class="fas fa-xs fa-angle-right text-muted"></i>
                     @yield('content_header_subtitle')
+                    @hasSection('content_header_subtitle_item')
+                        <i class="fas fa-xs fa-angle-right text-muted"></i>
+                        @yield('content_header_subtitle_item')
+                    @endif
                 </small>
             @endif
         </h1>

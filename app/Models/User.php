@@ -13,9 +13,6 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    // const ADMIN  = 'Admin';
-    // const MEMBER = 'Member';
-    
     /**
      * The attributes that are mass assignable.
      *
@@ -25,7 +22,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'parent_id',
+        'is_admin',
         'name',
         'email',
         'password',
@@ -149,6 +146,23 @@ class User extends Authenticatable
     }
 
     /**
+     * Define the relationship with the Order model.
+     *
+     * This method defines the many-to-many relationship between the `User` model
+     * and the `Order` model through the `user_orders` pivot table.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+
+    public function orders(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Order::class, 'user_orders')
+                                        ->using(UserOrder::class)
+                                        ->withPivot('type')
+                                        ->withTimestamps();
+    }
+
+    /**
      * Check if the user has a specific permission.
      *
      * This method checks whether the user has a permission with the given key by querying
@@ -161,5 +175,38 @@ class User extends Authenticatable
     public function hasUserPermission($permissionKey)
     {   
         return $this->permissions()->where('key', $permissionKey)->exists();
+    }
+
+    /**
+     * Check if the user is an admin.
+     *
+     * This method is a query scope that checks if a user has the `is_admin` attribute set to true. 
+     * It uses the `admin` scope to filter users by their admin status and checks if any matching record exists.
+     *
+     * @return bool True if the user is an admin, otherwise false.
+     */
+    public function scopeIsAdmin()
+    {
+        return $this->admin(true)->exists();
+    }
+
+    /**
+     * Scope for filtering users by admin status.
+     *
+     * This scope filters users based on the `is_admin` field, allowing the query 
+     * to retrieve users who are either admins or non-admins, depending on the 
+     * value of the `$role` parameter.
+     * 
+     * The `$role` parameter should be a boolean value (true for admin, false for non-admin).
+     * This method is applied to the `User` model.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  bool  $role
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    
+    public function scopeAdmin($query, $role)
+    {
+        return $query->where('is_admin', $role); 
     }
 }

@@ -83,7 +83,7 @@ class UsersController extends Controller
 
         $heads = array_values(array_filter($formattedColumns));
        
-        $users = User::whereNotNull('parent_id')
+        $users = User::admin('is_admin', false)
                         ->where('id', '!=', $this->user->id)
                         ->select('id', 'name', 'email', 'created_at')->get();
             
@@ -118,7 +118,7 @@ class UsersController extends Controller
             'with-buttons' => Gate::check('users_export') ? 'with-buttons' : null
         ];
 
-        if(!Gate::check('user_view') && !Gate::check('user_edit') && !Gate::check('user_delete'))
+        if(!Gate::check('user_show') && !Gate::check('user_edit') && !Gate::check('user_delete'))
         {
             array_pop( $config['heads'] );
             array_pop( $config['columns'] );
@@ -162,11 +162,9 @@ class UsersController extends Controller
         {
             try {
                 $data = $request->only(['name', 'email', 'password']);
-                $data['parent_id'] = $this->user->id;
                 $data['password']  = Hash::make($data['password']);
        
                 $user = User::create($data);
-                //return redirect()->back()->with('success', 'New User Created');
 
                 return response()->json([
                     'status'  => 200,

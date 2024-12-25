@@ -20,8 +20,10 @@ class PermissionsController extends Controller
     protected $config;
 
     /**
-     * Constructor for the controller.
-     * This middleware checks if the user is authenticated and sets the `$user` and `$config` properties.
+     * Constructor for the class.
+     * This constructor applies middleware that checks if the user is authenticated.
+     * If the user is authenticated, it sets the `$user` property to the authenticated user and
+     * loads the configuration into the `$config` property.
      *
      * @return void
      */
@@ -85,7 +87,7 @@ class PermissionsController extends Controller
 
         $permissions = Permission::select('id', 'name', 'description', 'created_at')
                                     ->withCount(['users' => function ($query) {
-                                        $query->whereNotNull('parent_id'); 
+                                        $query->admin('is_admin', false); 
                                     }])->get();   
 
         $config = [
@@ -121,7 +123,7 @@ class PermissionsController extends Controller
             'with-buttons' => $this->user->can('permissions_export') ? 'with-buttons' : null
         ];
 
-        if(!Gate::check('permission_view') && !Gate::check('permission_edit') && !Gate::check('permission_delete'))
+        if(!Gate::check('permission_show') && !Gate::check('permission_edit') && !Gate::check('permission_delete'))
         {
             array_pop( $config['heads'] );
             array_pop( $config['columns'] );
@@ -165,7 +167,7 @@ class PermissionsController extends Controller
 
         $heads = array_values(array_filter($formattedColumns));
 
-        $users = User::whereNotNull('parent_id')
+        $users = User::admin('is_admin', false)
                         ->where('id', '!=', $this->user->id)
                         ->select('id', 'name', 'email', 'created_at')->get();
             
@@ -278,7 +280,7 @@ class PermissionsController extends Controller
         if($request->ajax())
         {
             $users = $permission->users()
-                        ->whereNotNull('parent_id')
+                        ->admin('is_admin', false)
                         ->get()->map(function($user){
                 return [
                     'id'    => $user->id,
