@@ -16,7 +16,8 @@ class UsersTableSeeder extends Seeder
         User::query()->delete();
 
         $admin = User::create([
-            'name'     => USER::ADMIN,
+            'is_admin' => true,
+            'name'     => 'Admin',
             'email'    => 'admin@prioritytire.local',
             'password' => bcrypt('123')
         ]);

@@ -3,6 +3,9 @@
 use App\Http\Controllers\Dashboard\MainController;
 use App\Http\Controllers\Dashboard\UsersController;
 use App\Http\Controllers\Dashboard\PermissionsController;
+use App\Http\Controllers\Dashboard\DataImportController;
+use App\Http\Controllers\Dashboard\ImportedDataController;
+use App\Http\Controllers\Dashboard\ImportsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -94,6 +97,83 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'dashboard', 'as' => 'dashbo
      */
 
     Route::delete('/permissions/{ids}/bulk', [PermissionsController::class, 'bulk_delete']);
+
+
+     /**
+      * Index route for data import.
+      *
+      * This route displays the data import page, allowing users to view the interface 
+      * for importing data. It maps to the `index` method in the `DataImportController`.
+      *
+      * @return \Illuminate\View\View
+      */
+
+     Route::get('/data-import', [DataImportController::class, 'index'])->name('data-import.index');
+
+     /**
+      * Import route for data import.
+      *
+      * This route handles the import of data submitted by the user. It processes 
+      * the uploaded file and maps to the `import` method in the `DataImportController`.
+      *
+      * @param  \Illuminate\Http\Request  $request
+      * @return \Illuminate\Http\RedirectResponse
+      */
+
+     Route::post('/data-import', [DataImportController::class, 'import'])->name('data-import.import');
+
+     /**
+      * Resource route for displaying the list of imported data.
+      *
+      * This route handles the retrieval of a list of imported data based on the specified
+      * model and type. It filters the data according to the provided model (e.g., orders, users)
+      * and type (e.g., file1, file2) to return the relevant records.
+      * 
+      * - `index` (GET): Displays the list of imported data, filtered by the provided model and type.
+      *
+      * @see ImportedDataController
+      */
+
+     Route::get('/imported-data/{model}/{type}', [ImportedDataController::class, 'index'])->name('imported-data.index');
+
+     /**
+      * Resource route for showing the details of a specific imported data entry.
+      *
+      * This route is used to display the details of a single imported data entry, identified by
+      * its ID, model, and type. It allows for a detailed view of the data that has been imported
+      * based on the specified parameters.
+      * 
+      * - `show` (GET): Shows details of a specific import based on the model, type, and entry ID.
+      *
+      * @see ImportedDataController
+      */
+
+     Route::get('/imported-data/{model}/{type}/{id}', [ImportedDataController::class, 'show'])->name('imported-data.show');
+
+     /**
+      * Resource route for deleting an imported data entry.
+      *
+      * This route allows for the deletion of an imported data entry, identified by the model,
+      * type, and entry ID. It permanently removes the selected data from the system.
+      * 
+      * - `destroy` (DELETE): Deletes an imported data entry based on the model, type, and entry ID.
+      *
+      * @see ImportedDataController
+      */
+
+     Route::delete('/imported-data/{model}/{type}/{id}', [ImportedDataController::class, 'destroy'])->name('imported-data.destroy');
+
+     /**
+      * Index route for import logs.
+      *
+      * This route displays the import logs page, allowing users to view a list of 
+      * logs related to previous import operations. It maps to the `index` method 
+      * in the `ImportsController`.
+      *
+      * @return \Illuminate\View\View
+      */
+     
+     Route::get('/imports', [ImportsController::class, 'index'])->name('imports.index');
 });
 
 /**

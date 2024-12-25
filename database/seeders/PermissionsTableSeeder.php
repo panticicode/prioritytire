@@ -13,10 +13,10 @@ class PermissionsTableSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
+    {   
         Permission::query()->delete();
 
-        $userIds = User::whereNull('parent_id')->pluck('id')->toArray();
+        $userIds = User::admin(true)->pluck('id')->toArray();
 
         $permissions = [
             //Profile
@@ -24,6 +24,11 @@ class PermissionsTableSeeder extends Seeder
             //     'name'        => 'Auth Profile Edit',
             //     'description' => 'Access to Logged in Profile. Allow / Disallow User to change their profile.',
             // ],
+            //User Management Module
+            [
+                'name'        => 'User Management Access',
+                'description' => 'Access to User Management module',
+            ],
             //Users Module
             [
                 'name'        => 'Users Access',
@@ -92,20 +97,26 @@ class PermissionsTableSeeder extends Seeder
                 'name'        => 'Imported Data Access',
                 'description' => 'Access to Imported Data',
             ],
+            [
+                'name'        => 'Imported Data Show',
+                'description' => 'View details of changes: import, row, column, and old/new values',
+            ],
+            [
+                'name'        => 'Imported Data Delete',
+                'description' => 'Delete a specific row from imported data',
+            ],
             //Imports Module
             [
                 'name'        => 'Imports Access',
                 'description' => 'Access to Imports',
             ],
         ];
-
-        $timestamp = ['created_at' => now(), 'updated_at' => now()];
-
+   
         foreach ($permissions as $data) 
         {
             $permission = Permission::create($data);
 
-            $permission->users()->attach($userIds, $timestamp);
+            $permission->users()->attach($userIds);
         }
     }
 }
