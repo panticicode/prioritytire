@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Events\DataImport;
-use App\Models\Order;
 use App\Models\ImportLog;
+use App\Models\Import;
+use App\Models\Order;
 use Validator;
 
 class DataImportJob implements ShouldQueue
@@ -73,6 +74,13 @@ class DataImportJob implements ShouldQueue
         $hasErrors     = false;
         $processedRows = 0;
 
+        $import = Import::create([
+            'user_id'     => $this->user->id,
+            'import_type' => $this->type,
+            'file_name'   => basename($this->tempPath),
+            'status'      => 'pending', 
+        ]);
+
         foreach (array_slice($data, 1) as $index => $row) 
         {
             $rowData = array_combine($headers, $row);
@@ -122,6 +130,8 @@ class DataImportJob implements ShouldQueue
 
         $status = (!$processedRows) ? 'failed' : ($hasErrors ? 'errors' : 'success');
 
+        $import->update(['status' => $status]);
+        
         switch ($status) 
         {
             case ('failed'):

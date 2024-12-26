@@ -675,6 +675,8 @@ const isChecked = (selector) => {
 
 const showAlert = (theme, message) => {
     let background
+    let icon = theme
+
     switch(theme)
     {
         case("warning"):
@@ -682,6 +684,7 @@ const showAlert = (theme, message) => {
             break;
         case("danger"):
                 background = "#dc3545"
+                icon       = "error"
             break;   
         default:
                 background = "#51a351"
@@ -707,7 +710,7 @@ const showAlert = (theme, message) => {
 	    }
 	})
 	Toast.fire({
-	  icon: theme,
+	  icon: icon,
 	  title: message
 	})
 }
