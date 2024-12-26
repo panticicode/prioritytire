@@ -6,7 +6,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use App\Jobs\DataImportJob;
 
 class DataImport implements ShouldBroadcast
 {
@@ -19,18 +18,19 @@ class DataImport implements ShouldBroadcast
     public $message;
 
     /**
-     * Creates a new instance of the DataImport event.
-     * This constructor initializes the event with the provided parameters including the file path,
-     * configuration, user, import type, and a success message.
-     * It also dispatches a job to handle the data import process.
+     * Initializes a new instance of the DataImport event.
+     * This constructor sets up the event with the necessary parameters including the file path,
+     * configuration for the import process, the authenticated user, the import type, and a status message.
+     * It does not dispatch the job itself; instead, the job is dispatched separately as needed.
      *
-     * @param string $tempPath The path to the temporary file to be processed.
-     * @param array $config The configuration for the import process.
-     * @param \App\Models\User $user The authenticated user initiating the import.
-     * @param string $type The type of import being processed.
-     * @param string $message A message indicating the status of the import process.
+     * @param string $tempPath The path to the temporary file containing data to be processed.
+     * @param array $config The configuration settings for the import process, including mappings and validation rules.
+     * @param \App\Models\User $user The authenticated user who initiated the data import process.
+     * @param string $type The type of import being performed (e.g., 'full', 'incremental').
+     * @param string $message A message that reflects the status or result of the import process (e.g., success or failure).
      * @return void
      */
+    
     public function __construct($tempPath, $config, $user, $type, $message)
     {
         $this->tempPath = $tempPath;
@@ -38,8 +38,6 @@ class DataImport implements ShouldBroadcast
         $this->user     = $user;
         $this->type     = $type;
         $this->message  = $message;
-
-        DataImportJob::dispatch($tempPath, $config, $user, $type, $message);
     }
 
     /**

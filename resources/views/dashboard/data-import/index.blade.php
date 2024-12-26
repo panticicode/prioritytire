@@ -42,7 +42,7 @@
         @csrf
    
 		<div class="my-2">&nbsp;</div>
-		
+
 		<x-adminlte-select id="type" name="type" class="col">
 		    <x-slot name="prependSlot">
 		        <label for="type" class="col col-form-label">
@@ -96,7 +96,7 @@
 @push('js')
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-//Pusher.logToConsole = true
+Pusher.logToConsole = true
 
 var pusher = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', {
     cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}'
@@ -104,7 +104,7 @@ var pusher = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', {
 
 var channel = pusher.subscribe('data-import')
 channel.bind('DataImport', function(data) {
-  showAlert('success', data.message)
+  showAlert(data.message.theme, data.message.text)
 })
 
 $(() => {
