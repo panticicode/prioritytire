@@ -178,16 +178,16 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user is an admin.
+     * Determines if the user has admin privileges.
      *
-     * This method is a query scope that checks if a user has the `is_admin` attribute set to true. 
-     * It uses the `admin` scope to filter users by their admin status and checks if any matching record exists.
+     * This method is a query scope that verifies whether the user has the `is_admin` attribute set to true. 
+     * It filters the users based on the admin status and checks if any matching record exists.
      *
-     * @return bool True if the user is an admin, otherwise false.
+     * @return bool Returns true if the user is an admin, otherwise returns false.
      */
     public function scopeIsAdmin()
     {
-        return $this->admin(true)->exists();
+        return $this->is_admin;
     }
 
     /**

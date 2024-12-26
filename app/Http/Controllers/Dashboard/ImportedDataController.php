@@ -122,11 +122,17 @@ class ImportedDataController extends Controller
             )
         ];
 
-        if(!Gate::check('imported_data_show') && !Gate::check('imported_data_delete'))
+        if(
+            !Gate::check('imported_data_show')   && 
+            !Gate::check('imported_data_delete') && 
+            !Gate::check('import_orders_access')
+        )
         {
             array_pop( $config['heads'] );
             array_pop( $config['columns'] );
         }
+
+
         return $config;
     }
 
@@ -146,7 +152,9 @@ class ImportedDataController extends Controller
 
         if (!$this->user->isAdmin()) 
         {
-            $query->whereHas('users');
+            $query->whereHas('users', function($q){
+                $q->where('id', $this->user->id);
+            });
         }
 
         return $query->get();
