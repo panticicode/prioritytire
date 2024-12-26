@@ -11,11 +11,19 @@ This guide will show you how to set up and run this mini project build with Lara
 - MySQL 8+
 - Web Server (Apache2, Nginx, or any other web server)
 
+<img src="./git-images/prerequisites.png" width="600">
+
 ### Basic Setup
 
 ## Step 1: Clone the Repository
 
-To get started, clone the repository using one of the following methods:
+Navigate to the directory where you want to clone the repository:
+
+```bash
+cd /var/www/html/
+```
+
+then, clone the repository using one of the following methods:
 
 ### Using HTTPS:
 ```bash
@@ -28,7 +36,7 @@ git clone https://github.com/panticicode/prioritytire.git
 git clone git@github.com:panticicode/prioritytire.git
 ```
 
-<img src="./git-images/prerequisites.png" width="600">
+<img src="./git-images/clone.png" width="600">
 
 ### Alternatively:
 
