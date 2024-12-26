@@ -90,7 +90,7 @@ class Order extends Model
 
     protected function generateButton(string $permission, string $buttonTemplate): string
     {
-        if (!Gate::check($permission)) 
+        if (!Gate::check($permission) && !Gate::check('import_orders_access')) 
         {
             return '';
         }
