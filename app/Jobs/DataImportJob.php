@@ -9,7 +9,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Events\DataImport;
 use App\Models\Order;
+use App\Models\ImportLog;
 use Validator;
 
 class DataImportJob implements ShouldQueue
@@ -44,11 +46,11 @@ class DataImportJob implements ShouldQueue
     }
 
     /**
-     * Executes the job to handle the data import.
-     * This method processes the uploaded file by validating headers and rows,
-     * and inserting or updating orders based on the imported data.
-     * After processing, the temporary file is deleted.
-     *
+     * Handles the data import process.
+     * Validates the imported data and processes each row according to the provided configuration.
+     * Logs validation errors, updates or creates records in the database, and associates the imported orders with the user.
+     * The import status is determined based on the number of processed rows and validation errors.
+     * 
      * @return void
      */
     public function handle(): void
@@ -67,9 +69,11 @@ class DataImportJob implements ShouldQueue
             }
         }
 
-        $orderIds = [];
+        $orderIds      = [];
+        $hasErrors     = false;
+        $processedRows = 0;
 
-        foreach (array_slice($data, 1) as $row) 
+        foreach (array_slice($data, 1) as $index => $row) 
         {
             $rowData = array_combine($headers, $row);
             $rules = [];
@@ -82,6 +86,22 @@ class DataImportJob implements ShouldQueue
 
             if ($validator->fails()) 
             {
+                $hasErrors = true;
+
+                foreach ($validator->errors()->messages() as $column => $messages) 
+                {
+                    foreach ($messages as $message) 
+                    {
+                        ImportLog::create([
+                            'user_id'            => $this->user->id,
+                            'import_type'        => $this->type,
+                            'row_number'         => $index + 2,
+                            'column'             => $column,
+                            'invalid_value'      => $rowData[$column] ?? null,
+                            'validation_message' => $message,
+                        ]);
+                    }
+                }
                 continue;
             }
 
@@ -91,10 +111,39 @@ class DataImportJob implements ShouldQueue
 
             $order = Order::updateOrCreate($updateData, $createData);
             $orderIds[] = $order->id;
+            $processedRows++;
         }
 
         $this->user->orders()->attach($orderIds, ['type' => $this->type]);
 
         Storage::delete($this->tempPath);
+
+        // Setting message based on the result of the import
+
+        $status = (!$processedRows) ? 'failed' : ($hasErrors ? 'errors' : 'success');
+
+        switch ($status) 
+        {
+            case ('failed'):
+                    $this->message = [
+                        'theme' => 'danger',
+                        'text'  => 'Import Process Failed!'
+                    ];
+                break;
+            case ('errors'):
+                    $this->message = [
+                        'theme' => 'warning',
+                        'text'  => 'Import Process Finished but some errors occurred!'
+                    ];
+                break;
+            default:
+                    $this->message = [
+                        'theme' => 'success',
+                        'text'  => 'Import Process Finished Successfully!'
+                    ];
+                break;
+        }
+
+        event(new DataImport($this->tempPath, $this->config, $this->user, $this->type, $this->message));
     }
 }

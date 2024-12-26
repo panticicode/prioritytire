@@ -8,8 +8,8 @@ use App\Http\Requests\Dashboard\DataImport\ImportRequest;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Response;
+use App\Jobs\DataImportJob;
 use App\Models\Order;
-use App\Events\DataImport;
 use Auth;
 use Gate;
 
@@ -77,12 +77,12 @@ class DataImportController extends Controller
     }
 
     /**
-     * Handles the file import process.
-     * Validates the selected import type and processes the uploaded files.
-     * Triggers an event to handle the import asynchronously.
+     * Handles the data import process by validating the selected import type,
+     * processing the uploaded files, and dispatching a job to handle the import asynchronously.
+     * After processing, the user is notified about the status of the import.
      *
-     * @param \App\Http\Requests\Dashboard\DataImport\ImportRequest $request The incoming import request.
-     * @return \Illuminate\Http\JsonResponse The response indicating the status of the import process.
+     * @param \App\Http\Requests\Dashboard\DataImport\ImportRequest $request The incoming request containing the files to import and the selected import type.
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the status of the import process, including success or failure messages.
      */
 
     public function import(ImportRequest $request)
@@ -100,18 +100,18 @@ class DataImportController extends Controller
             ], 422);
         }
 
-        $message = 'The import process has been successfully completed!';
+        $message = 'Import is in progress. You will be notified when it is complete.';
 
         foreach ($request->file("files") as $file) 
         {
             $tempPath = $file->store('temp');
-            event(new DataImport($tempPath, $config, $this->user, $type, $message));
+            DataImportJob::dispatch($tempPath, $config, $this->user, $type, $message);
         }
 
         return response()->json([
             'status'  => 200,
             'theme'   => 'success',
-            'message' => 'Import is in progress. You will be notified when it is complete.',
+            'message' => $message,
         ]);
     }
 }

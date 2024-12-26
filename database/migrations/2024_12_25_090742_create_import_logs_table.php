@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('import_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->unsignedBigInteger('user_id');
+            $table->string('import_type');
+            $table->integer('row_number');
+            $table->string('column');
+            $table->string('invalid_value')->nullable();
+            $table->string('validation_message');
             $table->timestamps();
         });
     }
