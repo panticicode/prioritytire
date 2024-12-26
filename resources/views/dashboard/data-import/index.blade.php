@@ -96,8 +96,8 @@
 <script>
 //Pusher.logToConsole = true
 
-var pusher = new Pusher('b774fc9e4ea259b3532d', {
-  cluster: 'eu'
+var pusher = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', {
+    cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}'
 })
 
 var channel = pusher.subscribe('data-import')
