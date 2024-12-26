@@ -1,4 +1,4 @@
-# PriorityTire Setup
+# PriorityTire Setup with Jobs Events & Listeners
 
 This guide will show you how to set up and run this mini project build with Laravel.
 
@@ -7,6 +7,9 @@ This guide will show you how to set up and run this mini project build with Lara
 - For **Linux**, you need to have Apache or Nginx installed along with PHP.
 - For **Windows**, you need to have WAMP installed, which comes with Apache, PHP, and MySQL.
 
+- PHP 8.1+
+- MySQL 8+
+- Web Server (Apache2, Nginx, or any other web server)
 
 ### Basic Setup
 
@@ -24,6 +27,8 @@ git clone https://github.com/panticicode/prioritytire.git
 ```bash 
 git clone git@github.com:panticicode/prioritytire.git
 ```
+
+<img src="./git-images/prerequisites.png" width="600">
 
 ### Alternatively:
 
@@ -51,20 +56,29 @@ Navigate to the cloned directory and install the required dependencies using Com
 cd prioritytire
 composer install
 ```
+
+<img src="./git-images/composer.png" width="600">
+
 ### Step 3: Configure the Environment
 
-1. Copy the example environment file:
+1. Make a copy of environment file
 
 ```bash
 cp .env.dev .env
 ```
+
+<img src="./git-images/env.png" width="600">
 
 2. Generate an application key:
 ```bash
 php artisan key:generate
 ```
 
+<img src="./git-images/generate-key.png" width="600">
+
 3. Edit the .env file to configure your database and other settings as needed. 
+
+<img src="./git-images/env-edit.png" width="600">
 
 ### Step 4: Set Up the Database
 
@@ -73,14 +87,46 @@ Run the following commands to migrate your database and run seeders:
 ```bash
 php artisan migrate --seed
 ```
+During migration it will ask for create new database choose yes if db not exist
+
+<img src="./git-images/migration.png" width="600">
+
+4. Add Privileges
+
+```bash
+sudo chown -R www-data:www-data /var/www/html/prioritytire
+sudo chmod -R 777 /var/www/html/prioritytire/storage
+sudo chmod -R 777 /var/www/html/prioritytire/bootstrap
+```
+
+Note:
+- chmod 777 grants full read, write, and execute permissions to all users. While this is acceptable for local development environments, it is not secure for production.
+
+- For production, use more restrictive permissions (e.g., chmod 755 or chmod 775) and ensure sensitive files are owned by the web server user (www-data in this case).
+
+### Running Jobs & Queues in the Background
+
+To start the process in the background, follow these steps:
+
+open your terminal and run
+
+```sh
+php artisan queue:work
+```
+
+<img src="./git-images/queue.png" width="600">
+
 
 ### Running the Application with php artisan serve
 
 Laravel comes with a built-in development server, which you can use for quick testing and development. Here’s how to use it:
 
+Assuming we already running our queue background process, In a separate terminal, run:
+
 ```bash
 php artisan serve
 ```
+<img src="./git-images/serve.png" width="600">
 
 ### Access the Application
 
@@ -92,7 +138,26 @@ Notes: If port 8000 is already in use, you can specify a different port using th
 php artisan serve --port=8080
 ```
 
-Then, access your application at http://localhost:8080.
+## Environment Configuration
+
+Ensure your .env file is correctly configured for your local development environment. Key settings include:
+
+- Database connection settings
+- Pusher configuration
+- Queue connection settings
+
+If everything is set up correctly, you can access your application at:
+
+[http://localhost:8000](http://localhost:8000)
+
+
+## Users
+
+| Default User              | Password |
+|---------------------------|----------|
+| admin@prioritytire.local  |   123    |
+
+<img src="./git-images/app.png" width="600">
 
 Development Only: Note that php artisan serve is intended for development purposes only. For production, it's recommended to use a proper web server like Apache or Nginx.
 
