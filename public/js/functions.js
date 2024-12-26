@@ -253,17 +253,22 @@ const handleValidationErrors = (err) => {
 
     Object.keys(validator).forEach((key) => {
         let errorMessages = validator[key]
-
+        
         errorMessages.forEach((message) => {
             let input = $(`#${key}`)
-        
+
+            if(!input.length)
+            {   
+                input = $("#files")
+            }
+            
             input.addClass("is-invalid")
 
-            input.parent().append(`
+            input.parent().after(`
                 <span class="invalid-feedback d-block" role="alert">
                     <strong>${message}</strong>
                 </span>
-            `)  
+            `)
         })
     })
 }
@@ -675,6 +680,9 @@ const showAlert = (theme, message) => {
         case("warning"):
                 background = "#f1ba15"
             break;
+        case("danger"):
+                background = "#dc3545"
+            break;   
         default:
                 background = "#51a351"
             break;    
