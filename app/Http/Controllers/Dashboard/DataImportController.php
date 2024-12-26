@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Response;
 use App\Models\Order;
+use App\Events\DataImport;
 use Auth;
 use Gate;
 
@@ -38,6 +39,15 @@ class DataImportController extends Controller
         });
     }
 
+    /**
+     * Retrieves the configuration for the import process.
+     * If a specific type is provided, it returns the configuration for that type.
+     * Otherwise, it returns the general configuration for orders.
+     *
+     * @param string|null $type The type of import configuration to retrieve.
+     * @return array|false The configuration array or false if the type is not valid.
+     */
+
     protected function config($type = null)
     {
         if(is_null($type))
@@ -51,6 +61,13 @@ class DataImportController extends Controller
         return $config;
     }
 
+    /**
+     * Displays the data import page with the relevant configuration.
+     * Checks if the user has permission to access the page using the `Gate` facade.
+     * 
+     * @return \Illuminate\View\View The view for the data import page.
+     */
+
     public function index()
     {
         abort_if(Gate::denies("data_import_access"), Response::HTTP_FORBIDDEN, "403 Forbidden");
@@ -59,6 +76,15 @@ class DataImportController extends Controller
         return view("dashboard.data-import.index", compact("config"));
     }
 
+    /**
+     * Handles the file import process.
+     * Validates the selected import type and processes the uploaded files.
+     * Triggers an event to handle the import asynchronously.
+     *
+     * @param \App\Http\Requests\Dashboard\DataImport\ImportRequest $request The incoming import request.
+     * @return \Illuminate\Http\JsonResponse The response indicating the status of the import process.
+     */
+
     public function import(ImportRequest $request)
     {
         $type   = $request->type;
@@ -66,65 +92,26 @@ class DataImportController extends Controller
 
         if (!$config) 
         {
-            return redirect()->back()->withErrors(["files.*" => "Invalid import type selected."]);
+            return response()->json([
+                'message' => 'Invalid import type selected.',
+                'errors' => [
+                    'files' => ['Invalid import type selected.']
+                ]
+            ], 422);
         }
 
-        $orderIds = [];
+        $message = 'The import process has been successfully completed!';
 
         foreach ($request->file("files") as $file) 
         {
-            $filePath  = $file->getRealPath();
-            $extension = $file->getClientOriginalExtension();
-            $fileName  = $file->getClientOriginalName();
-
-            if (!in_array($extension, ["csv", "xlsx"])) 
-            {
-                return redirect()->back()->withErrors(["files.*" => "Only CSV and XLSX files are allowed."]);
-            }
-
-            $data    = Excel::toArray([], $file)[0];
-            $headers = $data[0];
-
-            // Validate headers
-            $requiredHeaders = array_keys($config["headers_to_db"]);
-
-            foreach ($requiredHeaders as $header) 
-            {
-                if (!in_array($header, $headers)) 
-                {
-                    return redirect()->back()->withErrors(["files.*" => "Missing header: $header"]);
-                }
-            }
-
-            // Validate and insert data
-            foreach (array_slice($data, 1) as $row) 
-            {
-                $rowData = array_combine($headers, $row);
-                $rules = [];
-                foreach ($config['headers_to_db'] as $key => $field) 
-                {
-                    $rules[$key] = $field['validation'];
-                }
-
-                $validator = Validator::make($rowData, $rules);
-
-                if ($validator->fails()) 
-                {
-                    return redirect()->back()->withErrors($validator->errors());
-                }
-
-                $updateKeys = $config['update_or_create'];
-                $updateData = array_intersect_key($rowData, array_flip($updateKeys));
-                $createData = array_diff_key($rowData, $updateData);
-
-                $order      = Order::updateOrCreate($updateData, $createData);
-
-                $orderIds[] = $order->id;
-            }
+            $tempPath = $file->store('temp');
+            event(new DataImport($tempPath, $config, $this->user, $type, $message));
         }
 
-        $this->user->orders()->attach($orderIds, ['type' => $request->type]);
-
-        return redirect()->back()->with("success", "The import process has been successfully completed!");
+        return response()->json([
+            'status'  => 200,
+            'theme'   => 'success',
+            'message' => 'Import is in progress. You will be notified when it is complete.',
+        ]);
     }
 }

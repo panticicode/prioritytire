@@ -24,7 +24,7 @@
 	theme="success" 
 	class="bg-teal py-1 w-75 mx-auto" 
 	icon="fas fa-sm fa-check-circle" 
-	title="Import Completed" 
+	title="Import in progress" 
 	dismissable
 >
     <i class="text-dark">{{ session('success') }}!</i>
@@ -38,7 +38,7 @@
 @section('content_body')
 <div class="container">
     <h1>Data Import</h1>
-    <form action="{{ route('dashboard.data-import.import') }}" method="POST" enctype="multipart/form-data">
+    <form id="dataImportForm" action="{{ route('dashboard.data-import.import') }}" method="POST" enctype="multipart/form-data">
         @csrf
    
 		<div class="my-2">&nbsp;</div>
@@ -90,3 +90,45 @@
     </form>
 </div>
 @endsection
+
+@push('js')
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script>
+//Pusher.logToConsole = true
+
+var pusher = new Pusher('b774fc9e4ea259b3532d', {
+  cluster: 'eu'
+})
+
+var channel = pusher.subscribe('data-import')
+channel.bind('DataImport', function(data) {
+  showAlert('success', data.message)
+})
+
+$(() => {
+	$("#dataImportForm").on("submit", (evt) => {
+        evt.preventDefault()
+        const $this = evt.currentTarget
+
+        const formData = new FormData($this)
+        const url = $($this).attr("action")
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: (res) => {
+                showAlert(res.theme, res.message)
+                $this.reset()
+                cleanAlerts()
+            },
+            error: (error) => {
+                handleValidationErrors(error)
+            }
+        })
+    })
+})
+</script>
+@endpush
