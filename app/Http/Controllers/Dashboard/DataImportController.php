@@ -72,7 +72,7 @@ class DataImportController extends Controller
     {
         abort_if(Gate::denies("data_import_access"), Response::HTTP_FORBIDDEN, "403 Forbidden");
         $config = $this->config;
-       
+
         return view("dashboard.data-import.index", compact("config"));
     }
 

@@ -42,7 +42,7 @@
         @csrf
    
 		<div class="my-2">&nbsp;</div>
-
+		
 		<x-adminlte-select id="type" name="type" class="col">
 		    <x-slot name="prependSlot">
 		        <label for="type" class="col col-form-label">
@@ -51,7 +51,9 @@
 		    </x-slot>
 		    <option disabled selected>{{ $config['label'] }}</option>
 		    @foreach($config['files'] as $key => $type)
-				<option value="{{ $key }}">{{ $type['label'] }}</option>
+		    	@can($config['permission_required'])
+		   			<option value="{{ $key }}">{{ $type['label'] }}</option>
+		   		@endcan
 			@endforeach
 		</x-adminlte-select>
 		

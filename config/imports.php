@@ -3,7 +3,7 @@
 return [
     'orders' => [
         'label' => 'Import Orders',
-        'permission_required' => 'import-orders',
+        'permission_required' => 'import_orders_access',
         'files' => [
             'file1' => [
                 'label' => 'File 1',

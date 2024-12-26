@@ -19,11 +19,6 @@ class PermissionsTableSeeder extends Seeder
         $userIds = User::admin(true)->pluck('id')->toArray();
 
         $permissions = [
-            //Profile
-            // [
-            //     'name'        => 'Auth Profile Edit',
-            //     'description' => 'Access to Logged in Profile. Allow / Disallow User to change their profile.',
-            // ],
             //User Management Module
             [
                 'name'        => 'User Management Access',
@@ -96,6 +91,10 @@ class PermissionsTableSeeder extends Seeder
             [
                 'name'        => 'Imported Data Access',
                 'description' => 'Access to Imported Data',
+            ],
+            [
+                'name'        => 'Import Orders Access',
+                'description' => 'Access to Import Orders',
             ],
             [
                 'name'        => 'Imported Data Show',
