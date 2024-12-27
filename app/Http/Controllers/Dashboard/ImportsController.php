@@ -38,6 +38,16 @@ class ImportsController extends Controller
         });
     }
 
+    /**
+     * Configure column headers and data for displaying imports.
+     *
+     * This method generates a configuration array for displaying import records in a tabular format. It retrieves 
+     * the column names from the 'imports' table and formats the column headers based on predefined rules. The method 
+     * also fetches the import data and prepares it for display.
+     *
+     * @return array The configuration array containing column headers, data, sorting order, and column attributes.
+     */
+
     protected function config()
     {
         $columns = array_map(function ($column) {
@@ -132,6 +142,17 @@ class ImportsController extends Controller
         return $query->get();
     }
 
+    /**
+     * Display the list of imports.
+     *
+     * This method checks if the user has permission to access import records. If the user has access, it retrieves 
+     * the configuration for displaying the imports and sets the table headers. It then returns the view for displaying 
+     * the imports.
+     *
+     * @return \Illuminate\View\View The view displaying the list of imports.
+     * @throws \Illuminate\Auth\Access\AuthorizationException If the user does not have access.
+     */
+
     public function index()
     {
         abort_if(Gate::denies('imports_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -140,6 +161,17 @@ class ImportsController extends Controller
         return view('dashboard.imports.index', compact('config', 'heads'));
     }
 
+    /**
+     * Show the logs for a specific import.
+     *
+     * This method retrieves the logs for a specific import record. If the request is made via AJAX, it returns the logs 
+     * in JSON format.
+     *
+     * @param \Illuminate\Http\Request $request The current HTTP request instance.
+     * @param \App\Models\Import $import The import record for which logs are being retrieved.
+     * @return \Illuminate\Http\JsonResponse The logs in JSON format if the request is AJAX.
+     */
+    
     public function show(Request $request, Import $import)
     {
         if($request->ajax())

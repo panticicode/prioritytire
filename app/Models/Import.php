@@ -72,15 +72,44 @@ class Import extends Model
         return str_replace('<button', "<button data-id='$this->id'", $buttonTemplate);
     }
 
+    /**
+     * Define the relationship with the User model.
+     *
+     * This method defines the belongsTo relationship between the `Import` model
+     * and the `User` model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    /**
+     * Define the relationship with the User model.
+     *
+     * This method defines the hasMany relationship between the `Import` model
+     * and the `User` model. It indicates that an import can have multiple users
+     * associated with it.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+
     public function users(): \Illuminate\Database\Eloquent\Relations\hasMany
     {
         return $this->hasMany(User::class, 'id', 'user_id');
     }
+
+    /**
+     * Define the relationship with the ImportLog model.
+     *
+     * This method defines the hasMany relationship between the `Import` model
+     * and the `ImportLog` model. It indicates that an import can have multiple logs
+     * associated with it.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
 
     public function logs(): \Illuminate\Database\Eloquent\Relations\hasMany
     {

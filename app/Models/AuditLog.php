@@ -16,6 +16,15 @@ class AuditLog extends Model
         'new_value'
     ];
 
+    /**
+     * Define the relationship with the Import model.
+     *
+     * This method defines the belongsTo relationship between the `AuditLog` model
+     * and the `Import` model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+
     public function import(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Import::class);

@@ -47,6 +47,19 @@ class ImportedDataController extends Controller
         });
     }
 
+    /**
+     * Configure column headers and data for displaying orders.
+     *
+     * This method generates a configuration array for displaying orders in a tabular format. It retrieves the column 
+     * names from the specified model and formats the column headers based on predefined rules. The method also 
+     * fetches the order data and prepares it for display. If the user lacks certain permissions, the Actions column 
+     * is removed from the configuration.
+     *
+     * @param string $model The name of the model for which the configuration is generated.
+     * @param string $type The type of configuration.
+     * @return array The configuration array containing column headers, data, sorting order, and column attributes.
+     */
+
     protected function config($model, $type)
     {
         $columns = DB::getSchemaBuilder()->getColumnListing($model);
@@ -66,19 +79,29 @@ class ImportedDataController extends Controller
         $formattedColumns = array_map(function ($column) use ($columnsToFormat) {
             if (in_array($column, $columnsToFormat)) 
             {
-                if ($column === 'id') 
+                switch ($column) 
                 {
-                    return [
-                        'label' => Str::upper($column),
-                        'width' => 5, 
-                    ]; 
+                    case ('sku'):
+                            return [
+                                'label' => Str::upper($column)
+                            ]; 
+                        break;
+                    case ('so_num'):
+                            return [
+                                'label' => Str::upper( Str::replace('_num', '#', $column) )
+                            ];
+                        break;
+                    
+                    default:
+                            return [
+                                'label' => Str::title( Str::replace('_', ' ', $column) )
+                            ];
+                        break;
                 }
-                return [
-                    'label' => Str::title( $column )
-                ];
+                return $column;
             }
         }, $columns);
-
+   
         $formattedColumns[] = [
             'label' => 'Actions', 
             'no-export' => true, 
@@ -87,7 +110,7 @@ class ImportedDataController extends Controller
         ];
 
         $heads  = array_values(array_filter($formattedColumns));
-        
+
         $orders = $this->orders($model, array_merge(['id'], $columnsToFormat));
        
         $config = [
@@ -160,6 +183,20 @@ class ImportedDataController extends Controller
 
         return $query->get();
     }
+
+    /**
+     * Display the imported data.
+     *
+     * This method checks if the user has permission to access imported data. If the user has access, it retrieves 
+     * the configuration for displaying the orders, the current user, and sets the table headers. It then returns 
+     * the view for displaying the imported data.
+     *
+     * @param string $model The name of the model for which the data is being displayed.
+     * @param string $type The type of data being displayed.
+     * @return \Illuminate\View\View The view displaying the imported data.
+     * @throws \Illuminate\Auth\Access\AuthorizationException If the user does not have access.
+     */
+
     public function index($model, $type)
     {
         abort_if(Gate::denies('imported_data_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -168,6 +205,19 @@ class ImportedDataController extends Controller
         $heads  = ['id', 'import', 'row', 'column', 'old value', 'new value'];
         return view('dashboard.imported-data.index', compact('config', 'user', 'model', 'type', 'heads'));
     }
+
+    /**
+     * Show the audit logs for a specific record.
+     *
+     * This method retrieves the audit logs for a specific record in the specified model. If the request is made via 
+     * AJAX, it returns the audit logs in JSON format.
+     *
+     * @param \Illuminate\Http\Request $request The current HTTP request instance.
+     * @param string $model The name of the model containing the record.
+     * @param string $type The type of data being displayed.
+     * @param int $id The ID of the record for which audit logs are being retrieved.
+     * @return \Illuminate\Http\JsonResponse The audit logs in JSON format if the request is AJAX.
+     */
 
     public function show(Request $request, $model, $type, $id)
     {
@@ -189,6 +239,19 @@ class ImportedDataController extends Controller
         }
     }
 
+    /**
+     * Delete a specific record.
+     *
+     * This method deletes a specific record in the specified model. If the deletion is successful, it returns a 
+     * JSON response with a success message. If an error occurs during deletion, it logs the error and returns a 
+     * JSON response with an error message.
+     *
+     * @param string $model The name of the model containing the record to be deleted.
+     * @param string $type The type of data being deleted.
+     * @param int $id The ID of the record to be deleted.
+     * @return \Illuminate\Http\JsonResponse The result of the delete operation.
+     */
+    
     public function destroy($model, $type, $id)
     {
         try {
