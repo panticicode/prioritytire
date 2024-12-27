@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 use App\Models\Product;
 
 class ProductsTableSeeder extends Seeder
@@ -15,20 +16,27 @@ class ProductsTableSeeder extends Seeder
     {
         Product::truncate();
         
-        $datas = [
-            [
-                'name'        => 'Test Product',
-                'sku'         => 'N12345-99',
-                'description' => 'Test Product Description'
-            ],
-            [
-                'name'        => 'Test Product 2',
-                'sku'         => 'N12345-88',
-                'description' => 'Test Product Description 2'
-            ]
+        $faker = Faker::create();
+
+        $skus = [
+            'N12345-99',
+            'N12345-88',
+            'N12345-77',
+            'N12345-66',
         ];
 
-        foreach($datas as $data)
+        $datas = [];
+
+        foreach ($skus as $sku) 
+        {
+            $datas[] = [
+                'name'        => $faker->words(3, true),
+                'sku'         => $sku,
+                'description' => $faker->sentence
+            ];
+        }
+
+        foreach ($datas as $data) 
         {
             Product::create($data);
         }
