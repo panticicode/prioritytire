@@ -36,24 +36,33 @@
 @section('content_header_subtitle', 'Data Import') 
 
 @section('content_body')
+
 <div class="container">
     <h1>Data Import</h1>
     <form id="dataImportForm" action="{{ route('dashboard.data-import.import') }}" method="POST" enctype="multipart/form-data">
         @csrf
    
 		<div class="my-2">&nbsp;</div>
-
+		<input id="model" type="hidden" name="model">
 		<x-adminlte-select id="type" name="type" class="col">
 		    <x-slot name="prependSlot">
 		        <label for="type" class="col col-form-label">
 		            Import Type
 		        </label>
 		    </x-slot>
-		    <option disabled selected>{{ $config['label'] }}</option>
-		    @foreach($config['files'] as $key => $type)
-		    	@can($config['permission_required'])
-		   			<option value="{{ $key }}">{{ $type['label'] }}</option>
-		   		@endcan
+
+		    <option disabled selected>Choose Import Type</option>
+		    @foreach($configs as $key => $config)
+			    @foreach($config['files'] as $k => $type)
+			    	@can($config['permission_required'])
+			    		@php
+			    			$model = $key === 'clients_and_sales' ? $k : $key;
+			    		@endphp
+			   			<option data-key="{{ $key }}" value="{{ $k }}">
+			   				Import - {{ Str::title($model) }} - {{ $type['label'] }}
+			   			</option>
+			   		@endcan
+				@endforeach
 			@endforeach
 		</x-adminlte-select>
 		
@@ -105,6 +114,12 @@ var pusher = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', {
 var channel = pusher.subscribe('data-import')
 channel.bind('DataImport', function(data) {
   showAlert(data.message.theme, data.message.text)
+})
+
+$("#type").on("change", (evt) => {
+	$this = evt.currentTarget
+	const $model = $($this).find("option:selected").data("key")
+	$("#model").val($model)
 })
 
 $(() => {

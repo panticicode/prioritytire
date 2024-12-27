@@ -28,6 +28,7 @@ class DataImportJob implements ShouldQueue
     protected $tempPath;
     protected $fileName;
     protected $config;
+    protected $model;
     protected $user;
     protected $type;
     protected $message;
@@ -38,23 +39,68 @@ class DataImportJob implements ShouldQueue
      * Constructor for initializing the job with import process details.
      *
      * This constructor method sets up the required properties with the provided import process details.
-     * It initializes the temporary file path, file name, configuration, user, type, and message.
+     * It initializes the temporary file path, file name, configuration, model, user, type, and message.
      *
      * @param string $tempPath The path to the temporary file used during the import.
      * @param string $fileName The name of the file being processed for import.
      * @param array $config An array containing the configuration settings for the import process.
+     * @param string $model The name of the model being processed for import.
      * @param \App\Models\User $user The user who is initiating the import process.
      * @param string $type The type of import being performed.
      * @param string $message A message associated with the import process, typically used for notifications or logging.
      */
-    public function __construct($tempPath, $fileName, $config, $user, $type, $message)
+    public function __construct($tempPath, $fileName, $config, $model, $user, $type, $message)
     {
         $this->tempPath = $tempPath;
         $this->fileName = $fileName;
         $this->config   = $config;
+        $this->model    = $model;
         $this->user     = $user;
         $this->type     = $type;
         $this->message  = $message;
+    }
+
+    /**
+     * Method to convert columns to snake_case
+     *
+     * This method converts an array of column names into snake_case format, which
+     * is commonly used in database column naming conventions. It also handles
+     * special cases for acronyms that should not be converted to snake_case.
+     *
+     * @param array $columns An array of column names to be converted.
+     * @return array An array of column names converted to snake_case, with special
+     *               handling for specified acronyms.
+     *
+     * The method takes an array of column names as input and returns a new array
+     * with each column name converted to snake_case using the Str::snake function
+     * from Laravel's Str class. 
+     *
+     * Additionally, it maintains a list of acronyms that should not be converted
+     * to snake_case. For example, 'SKU' is converted to 'sku' and 'SO#' is 
+     * converted to 'so_num' according to the mapping defined in the $acronyms array.
+     *
+     * Example usage:
+     * $columns = ['Order Date', 'Channel', 'SKU', 'Item Description', 'Origin', 'SO#', 'Cost', 'Shipping Cost', 'Total Price'];
+     * $convertedColumns = $this->convertColumns($columns);
+     * // Result: ['order_date', 'channel', 'sku', 'item_description', 'origin', 'so_num', 'cost', 'shipping_cost', 'total_price']
+     */
+    public function convertColumns(array $columns): array
+    {
+        $acronyms = [
+            'SKU'       => 'sku',
+            'SO#'       => 'so_num',
+            'Item ID'   => 'item_id',
+            'Client ID' => 'client_id',
+            'Sale ID'   => 'sale_id'
+        ];
+        
+        return array_map(function($column) use ($acronyms) {
+            if (isset($acronyms[$column])) 
+            {
+                return $acronyms[$column];
+            }
+            return Str::snake($column);
+        }, $columns);
     }
 
     /**
@@ -89,11 +135,11 @@ class DataImportJob implements ShouldQueue
                 throw new Exception('Failed to load data from file.');
             }
 
-            $headers = $data[0];
+            $headers = $this->convertColumns($data[0]);
             $requiredHeaders = array_keys($this->config["headers_to_db"]);
-            
+           
             //$requiredHeaders[] = 'test'; // Test Exception
-
+ 
             foreach ($requiredHeaders as $header) 
             {
                 if (!in_array($header, $headers)) 
@@ -150,65 +196,68 @@ class DataImportJob implements ShouldQueue
                 $updateData = array_intersect_key($rowData, array_flip($updateKeys));
                 $createData = array_diff_key($rowData, $updateData);
                 unset($createData[""]);
-               
+                
                 if (isset($createData['total_price'])) 
                 {
                     $createData['total_price'] = UtilityHelper::convertToNumeric($createData['total_price'], $filePath);
                 }
-
-                foreach (array_keys(config('imports')) as $key) 
+                
+                if($this->model === "clients_and_sales")
                 {
-                    // Fetch existing model for comparison
-                    $existingModel  = UtilityHelper::model($key)->where($updateData)->first();
+                    $this->model = $this->type;
+                }
+                
+                // Fetch existing model for comparison
+                $existingModel  = UtilityHelper::model($this->model)->where($updateData)->first();
 
-                    if ($existingModel) 
+                if ($existingModel) 
+                {
+                    // Log changes
+                    foreach ($createData as $column => $newValue) 
                     {
-                        // Log changes
-                        foreach ($createData as $column => $newValue) 
+                        $oldValue = $existingModel->{$column};
+
+                        if($column === 'order_date')
                         {
-                            $oldValue = $existingModel->{$column};
-
-                            if($column === 'order_date')
+                            if (isset($createData['order_date'])) 
                             {
-                                if (isset($createData['order_date'])) 
-                                {
-                                    $oldValue = UtilityHelper::formatDate($oldValue, 'd/m/Y');
-                                    $newValue = UtilityHelper::formatDate($newValue, 'd/m/Y');
-                                }
-                            }
-
-                            if (is_null($oldValue) || is_null($newValue)) 
-                            {
-                                continue;
-                            }
-
-                            if ($oldValue != $newValue) 
-                            {
-                                AuditLog::create([
-                                    'import_id' => $import->id,
-                                    'model_id'  => $existingModel->id, 
-                                    'model'     => $key,
-                                    'row'       => $index + 2,
-                                    'column'    => $column,
-                                    'old_value' => $oldValue,
-                                    'new_value' => $newValue,
-                                ]);
+                                $oldValue = UtilityHelper::formatDate($oldValue, 'd/m/Y');
+                                $newValue = UtilityHelper::formatDate($newValue, 'd/m/Y');
                             }
                         }
-                    }
 
-                    $order      = UtilityHelper::model($key)->updateOrCreate($updateData, $createData);
-                    $modelIds[] = $order->id;    
+                        if (is_null($oldValue) || is_null($newValue)) 
+                        {
+                            continue;
+                        }
+
+                        if ($oldValue != $newValue) 
+                        {
+                            AuditLog::create([
+                                'import_id' => $import->id,
+                                'model_id'  => $existingModel->id, 
+                                'model'     => $key,
+                                'row'       => $index + 2,
+                                'column'    => $column,
+                                'old_value' => $oldValue,
+                                'new_value' => $newValue,
+                            ]);
+                        }
+                    }
                 }
+
+                $order      = UtilityHelper::model($this->model)->updateOrCreate($updateData, $createData);
+                $modelIds[] = $order->id; 
 
                 $processedRows++;
             }
-
-            array_map(function($model) use ($modelIds)
+            
+            if($this->model === "clients_and_sales")
             {
-                call_user_func([$this->user, $model])->attach($modelIds, ['type' => $this->type]);
+                $this->model = $this->type;
+            }
                 
-            }, array_keys(config('imports')));
+            call_user_func([$this->user, $this->model])->attach($modelIds, ['type' => $this->type]);
 
             Storage::delete($this->tempPath);
 
@@ -240,7 +289,7 @@ class DataImportJob implements ShouldQueue
                     break;
             }
 
-            event(new DataImport($this->tempPath, $this->fileName, $this->config, $this->user, $this->type, $this->message));
+            event(new DataImport($this->tempPath, $this->fileName, $this->config, $this->model, $this->user, $this->type, $this->message));
         } catch (Exception $e) {
             \Log::error('Error in DataImportJob: ' . $e->getMessage());
             event(new ImportFailed($this->user, $e->getMessage()));

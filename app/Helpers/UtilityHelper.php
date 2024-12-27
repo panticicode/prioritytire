@@ -215,7 +215,7 @@ class UtilityHelper
      * @param mixed $model The model instance or model name.
      * @return Model An instance of the corresponding model class.
      */
-    public static function model($model): Model
+    public static function model($model, $type = null): Model
     {
         if ($model instanceof Model) 
         {

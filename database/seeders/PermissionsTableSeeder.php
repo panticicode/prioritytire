@@ -97,6 +97,14 @@ class PermissionsTableSeeder extends Seeder
                 'description' => 'Access to Import Orders',
             ],
             [
+                'name'        => 'Import Items Access',
+                'description' => 'Access to Import Items',
+            ],
+            [
+                'name'        => 'Import Clients and Sales Access',
+                'description' => 'Access to Import Clients and Sales',
+            ],
+            [
                 'name'        => 'Imported Data Show',
                 'description' => 'View details import, row, column, value, and validation message.',
             ],
