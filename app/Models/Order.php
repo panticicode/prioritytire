@@ -14,7 +14,6 @@ class Order extends Model
      * @var array
      */
     protected $fillable = [
-        'row',
         'order_date',
         'channel',
         'sku',

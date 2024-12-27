@@ -14,11 +14,23 @@ class ProductsTableSeeder extends Seeder
     public function run(): void
     {
         Product::truncate();
+        
+        $datas = [
+            [
+                'name'        => 'Test Product',
+                'sku'         => 'N12345-99',
+                'description' => 'Test Product Description'
+            ],
+            [
+                'name'        => 'Test Product 2',
+                'sku'         => 'N12345-88',
+                'description' => 'Test Product Description 2'
+            ]
+        ];
 
-        Product::create([
-            'name'        => 'Test Product',
-            'sku'         => 'N12345-99',
-            'description' => 'Test Product Description'
-        ]);
+        foreach($datas as $data)
+        {
+            Product::create($data);
+        }
     }
 }
