@@ -4,12 +4,16 @@ This guide will show you how to set up and run this mini project build with Lara
 
 ### Prerequisites
 
+Make sure you have the following software installed and configured:
+
 - For **Linux**, you need to have Apache or Nginx installed along with PHP.
 - For **Windows**, you need to have WAMP installed, which comes with Apache, PHP, and MySQL.
 
 - PHP 8.1+
 - MySQL 8+
 - Web Server (Apache2, Nginx, or any other web server)
+
+- An email service such as Mailtrap, Mailgun, SendGrid, etc.
 
 <img src="./git-images/prerequisites.png" width="600">
 
@@ -84,7 +88,18 @@ php artisan key:generate
 
 <img src="./git-images/generate-key.png" width="600">
 
-3. Edit the .env file to configure your database and other settings as needed. 
+3. Edit the .env file to configure your database, email configurations and other settings as needed. 
+
+```bash
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=example@example.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
 
 <img src="./git-images/env-edit.png" width="600">
 
