@@ -14,6 +14,7 @@ class DataImport implements ShouldBroadcast
     public $tempPath;
     public $fileName;
     public $config;
+    public $model;
     public $user;
     public $type;
     public $message;
@@ -27,16 +28,18 @@ class DataImport implements ShouldBroadcast
      * @param string $tempPath The path to the temporary file used during the import.
      * @param string $fileName The name of the file being processed for import.
      * @param array $config An array containing the configuration settings for the import process.
+     * @param string $model The name of the model being processed for import.
      * @param \App\Models\User $user The user who is initiating the import process.
      * @param string $type The type of import being performed.
      * @param string $message A message associated with the import process, typically used for notifications or logging.
      */
     
-    public function __construct($tempPath, $fileName, $config, $user, $type, $message)
+    public function __construct($tempPath, $fileName, $config, $model, $user, $type, $message)
     {
         $this->tempPath = $tempPath;
         $this->fileName = $fileName;
         $this->config   = $config;
+        $this->model    = $model;
         $this->user     = $user;
         $this->type     = $type;
         $this->message  = $message;

@@ -165,6 +165,57 @@ class User extends Authenticatable
     }
 
     /**
+     * Define the relationship with the Item model.
+     *
+     * This method defines the many-to-many relationship between the `User` model
+     * and the `Item` model through the `user_items` pivot table.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+
+    public function items(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'user_items')
+                                        ->using(UserClient::class)
+                                        ->withPivot('type')
+                                        ->withTimestamps();
+    }
+
+    /**
+     * Define the relationship with the Sale model.
+     *
+     * This method defines the many-to-many relationship between the `User` model
+     * and the `Sale` model through the `user_sales` pivot table.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+
+    public function sales(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Sale::class, 'user_sales')
+                                        ->using(UserSale::class)
+                                        ->withPivot('type')
+                                        ->withTimestamps();
+    }
+
+    /**
+     * Define the relationship with the Client model.
+     *
+     * This method defines the many-to-many relationship between the `User` model
+     * and the `Client` model through the `user_clients` pivot table.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+
+    public function clients(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Client::class, 'user_clients')
+                                        ->using(UserItem::class)
+                                        ->withPivot('type')
+                                        ->withTimestamps();
+    }
+
+    /**
      * Check if the user has a specific permission.
      *
      * This method checks whether the user has a permission with the given key by querying

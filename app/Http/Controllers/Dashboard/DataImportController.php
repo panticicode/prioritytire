@@ -50,14 +50,20 @@ class DataImportController extends Controller
 
     protected function config($type = null)
     {
-        if(is_null($type))
+        $config = [];
+
+        foreach(array_keys(config("imports")) as $key)
         {
-            $config = config("imports.orders");
+            if(is_null($type))
+            {
+                $config[$key] = config("imports.$key");
+            }
+            else
+            {
+                $config[$key] = config("imports.$key.files")[$type] ?? false;
+            }
         }
-        else
-        {
-            $config = config("imports.orders.files")[$type] ?? false;
-        }
+        
         return $config;
     }
 
@@ -71,9 +77,8 @@ class DataImportController extends Controller
     public function index()
     {
         abort_if(Gate::denies("data_import_access"), Response::HTTP_FORBIDDEN, "403 Forbidden");
-        $config = $this->config;
-
-        return view("dashboard.data-import.index", compact("config"));
+        $configs = $this->config;
+        return view("dashboard.data-import.index", compact("configs"));
     }
 
     /**
@@ -87,9 +92,11 @@ class DataImportController extends Controller
 
     public function import(ImportRequest $request)
     {
-        $type   = $request->type;
-        $config = $this->config($type);
+        $type    = $request->type;
+        $model   = $request->model;
 
+        $config  = $this->config($type)[$model];
+      
         if (!$config) 
         {
             return response()->json([
@@ -102,13 +109,15 @@ class DataImportController extends Controller
 
         $message = 'Import is in progress. You will be notified when it is complete.';
 
+
         foreach ($request->file("files") as $file) 
         {
             $tempPath = $file->store('temp');
             $fileName = $file->getClientOriginalName();
-            DataImportJob::dispatch($tempPath, $fileName, $config, $this->user, $type, $message);
+            
+            DataImportJob::dispatch($tempPath, $fileName, $config, $model, $this->user, $type, $message);
         }
-
+      
         return response()->json([
             'status'  => 200,
             'theme'   => 'success',

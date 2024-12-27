@@ -48,33 +48,90 @@ class ImportedDataController extends Controller
     }
 
     /**
-     * Configure column headers and data for displaying orders.
+     * Get columns to format based on the specified model and type.
      *
-     * This method generates a configuration array for displaying orders in a tabular format. It retrieves the column 
+     * This method returns an array containing the columns that need to be formatted for the specified model and type. 
+     * It supports dynamic column selection for different models including items, clients, sales, and a default model.
+     * Additionally, if the model is 'clients_and_sales', it uses the type to determine the columns.
+     *
+     * @param string $model The name of the model for which the columns are retrieved.
+     * @param string $type The type used to determine columns when model is 'clients_and_sales'.
+     * @return array An array containing the columns to format and the columns retrieved from the database schema.
+     */
+
+    protected function columnsToFormat($model, $type)
+    {
+        if($model === 'clients_and_sales')
+        {
+            $model = $type;
+        }
+        switch($model)
+        {
+            case('items'):
+                    $columns = [
+                        'item_id',
+                        'name',
+                        'category',
+                        'price',
+                        'stock'
+                    ];
+                break; 
+             case('clients'):  
+                    $columns = [
+                        'client_id',
+                        'name',
+                        'email',
+                        'phone',
+                    ];
+                break;       
+            case('sales'):  
+                    $columns = [
+                        'sale_id',
+                        'client_id',
+                        'sale_date',
+                        'total',
+                    ];
+                break;  
+            default:
+                    $columns = [
+                        'order_date',
+                        'channel',
+                        'sku',
+                        'item_description',
+                        'origin',
+                        'so_num',
+                        'cost',
+                        'shipping_cost',
+                        'total_price'
+                    ];
+                break;     
+        }
+       
+        return [
+            'columns' => $columns,
+            'db'      => DB::getSchemaBuilder()->getColumnListing($model)
+        ];
+    }
+    
+    /**
+     * Configure column headers and data for displaying models.
+     *
+     * This method generates a configuration array for displaying data in a tabular format. It retrieves the column 
      * names from the specified model and formats the column headers based on predefined rules. The method also 
-     * fetches the order data and prepares it for display. If the user lacks certain permissions, the Actions column 
+     * fetches the model data and prepares it for display. If the user lacks certain permissions, the Actions column 
      * is removed from the configuration.
      *
      * @param string $model The name of the model for which the configuration is generated.
-     * @param string $type The type of configuration.
+     * @param string $type The type used for determining dynamic columns when the model is 'clients_and_sales'.
      * @return array The configuration array containing column headers, data, sorting order, and column attributes.
      */
 
     protected function config($model, $type)
-    {
-        $columns = DB::getSchemaBuilder()->getColumnListing($model);
+    {   
+        $columnsToFormat = $this->columnsToFormat($model, $type)['columns'];
 
-        $columnsToFormat = [
-            'order_date',
-            'channel',
-            'sku',
-            'item_description',
-            'origin',
-            'so_num',
-            'cost',
-            'shipping_cost',
-            'total_price'
-        ];
+        $columns         = $this->columnsToFormat($model, $type)['db'];
+
 
         $formattedColumns = array_map(function ($column) use ($columnsToFormat) {
             if (in_array($column, $columnsToFormat)) 
@@ -111,45 +168,29 @@ class ImportedDataController extends Controller
 
         $heads  = array_values(array_filter($formattedColumns));
 
-        $orders = $this->orders($model, array_merge(['id'], $columnsToFormat));
+        $result = $this->model($model, $type, array_merge(['id'], $columnsToFormat));
        
         $config = [
             'heads' => $heads,
-            'data' => $orders->map(function ($order) {
-                return [
-                    $order->order_date,
-                    $order->channel,
-                    $order->sku,
-                    $order->item_description,
-                    $order->origin,
-                    $order->so_num,
-                    $order->cost,
-                    $order->shipping_cost,
-                    $order->total_price,
-                    $order->action,
-                ];
+            'data' => $result->map(function ($model) use ($columnsToFormat) {
+                $rowData = [];
+                foreach ($columnsToFormat as $column) {
+                    $rowData[] = $model->$column;
+                }
+                $rowData[] = $model->action; // Dodajemo akciju na kraju
+                return $rowData;
             })->toArray(),
             'order'   => [[0, 'desc']],
             'columns' => array_merge(
-                [
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    ['orderable' => false], 
-                ]
+                array_fill(0, count($columnsToFormat), null),
+                [['orderable' => false]]
             )
         ];
 
         if(
             !Gate::check('imported_data_show')   && 
             !Gate::check('imported_data_delete') && 
-            !Gate::check('import_orders_access')
+            !Gate::check('import_' . $model . '_access')
         )
         {
             array_pop( $config['heads'] );
@@ -170,8 +211,13 @@ class ImportedDataController extends Controller
      * @return \Illuminate\Database\Eloquent\Collection
      */
 
-    protected function orders($model, $columns)
-    {
+    protected function model($model, $type, $columns)
+    {   
+        if($model === 'clients_and_sales')
+        {
+            $model = $type;
+        }
+
         $query = UtilityHelper::model($model)::select($columns);
 
         if (!$this->user->isAdmin()) 
@@ -198,11 +244,15 @@ class ImportedDataController extends Controller
      */
 
     public function index($model, $type)
-    {
+    {   
         abort_if(Gate::denies('imported_data_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $config = $this->config($model, $type);
         $user   = $this->user;
         $heads  = ['id', 'import', 'row', 'column', 'old value', 'new value'];
+
+        $model = Str::replace('_', ' ', Str::title($model));
+        $type = Str::title($type);
+
         return view('dashboard.imported-data.index', compact('config', 'user', 'model', 'type', 'heads'));
     }
 

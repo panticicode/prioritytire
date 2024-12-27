@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 // Route for the home page
 Route::get('/', [MainController::class, 'home'])->name('home');
 
+// Route for Creating Dymmy files for testing
+Route::get('/create-files/{model}/{type}', [MainController::class, 'create_files']);
+
 /**
  * The route group for the dashboard, only accessible to authenticated users.
  *
