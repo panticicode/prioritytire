@@ -14,6 +14,7 @@ class Order extends Model
      * @var array
      */
     protected $fillable = [
+        'row',
         'order_date',
         'channel',
         'sku',
@@ -31,7 +32,7 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
-        //'order_date'    => 'date',
+        'order_date'    => 'date',
         'cost'          => 'float',
         'shipping_cost' => 'float',
         'total_price'   => 'float',
@@ -46,10 +47,22 @@ class Order extends Model
      * @param  string  $value  The original value of the "order_date" attribute from the database.
      * @return string          The formatted date in "d/m/Y" format.
      */
-    
     public function getOrderDateAttribute($value): string
     {
         return Carbon::parse($value)->format('d/m/Y');
+    }
+
+    /**
+     * Mutator for the "order_date" attribute.
+     *
+     * This mutator ensures the order_date attribute is stored in the correct format.
+     *
+     * @param  string  $value  The value to be set to the "order_date" attribute.
+     * @return void
+     */
+    public function setOrderDateAttribute($value): void
+    {
+       $this->attributes['order_date'] = Carbon::createFromFormat('d.m.Y', $value)->format('Y-m-d');
     }
 
     /**
@@ -113,5 +126,20 @@ class Order extends Model
                                         ->using(UserOrder::class)
                                         ->withPivot('type')
                                         ->withTimestamps();
+    }
+
+    /**
+     * Establishes a one-to-many relationship with the AuditLog model.
+     *
+     * This method defines a relationship where the current model can have many associated AuditLog entries.
+     * Each AuditLog entry is linked through the 'model_id' foreign key.
+     * Additionally, the related AuditLog entries are eager loaded with their corresponding 'import' relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    
+    public function audits(): \Illuminate\Database\Eloquent\Relations\hasMany
+    {
+        return $this->hasMany(AuditLog::class, 'model_id', 'id')->with('import');
     }
 }

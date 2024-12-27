@@ -12,28 +12,30 @@ class DataImport implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $tempPath;
+    public $fileName;
     public $config;
     public $user;
     public $type;
     public $message;
 
     /**
-     * Initializes a new instance of the DataImport event.
-     * This constructor sets up the event with the necessary parameters including the file path,
-     * configuration for the import process, the authenticated user, the import type, and a status message.
-     * It does not dispatch the job itself; instead, the job is dispatched separately as needed.
+     * Constructor for initializing the event with import process details.
      *
-     * @param string $tempPath The path to the temporary file containing data to be processed.
-     * @param array $config The configuration settings for the import process, including mappings and validation rules.
-     * @param \App\Models\User $user The authenticated user who initiated the data import process.
-     * @param string $type The type of import being performed (e.g., 'full', 'incremental').
-     * @param string $message A message that reflects the status or result of the import process (e.g., success or failure).
-     * @return void
+     * This constructor method sets up the required properties with the provided import process details.
+     * It initializes the temporary file path, file name, configuration, user, type, and message.
+     *
+     * @param string $tempPath The path to the temporary file used during the import.
+     * @param string $fileName The name of the file being processed for import.
+     * @param array $config An array containing the configuration settings for the import process.
+     * @param \App\Models\User $user The user who is initiating the import process.
+     * @param string $type The type of import being performed.
+     * @param string $message A message associated with the import process, typically used for notifications or logging.
      */
     
-    public function __construct($tempPath, $config, $user, $type, $message)
+    public function __construct($tempPath, $fileName, $config, $user, $type, $message)
     {
         $this->tempPath = $tempPath;
+        $this->fileName = $fileName;
         $this->config   = $config;
         $this->user     = $user;
         $this->type     = $type;

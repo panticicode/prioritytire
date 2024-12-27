@@ -8,10 +8,15 @@ class ImportLog extends Model
 {
     protected $fillable = [
     	'user_id',
-		'import_type',
-		'row_number',
+		'type',
+		'row',
 		'column',
-		'invalid_value',
-		'validation_message'
+		'value',
+		'message'
     ];
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

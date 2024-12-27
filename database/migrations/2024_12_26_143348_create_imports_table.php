@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('imports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
-            $table->string('import_type'); 
-            $table->string('file_name'); 
+            $table->string('type'); 
+            $table->string('filename'); 
             $table->enum('status', ['pending', 'success', 'failed', 'errors']);
             $table->timestamps();
         });

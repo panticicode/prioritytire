@@ -128,6 +128,55 @@ const viewItem = (button, template) => {
 }
 
 /**
+ * Generates HTML table rows from an array of objects.
+ *
+ * This function takes an array of objects and converts each object into an HTML table row (`<tr>`).
+ * Each key-value pair in the object is converted into a table data cell (`<td>`).
+ * The resulting HTML string is a concatenation of all table rows.
+ *
+ * @param {Array<Object>} data - The array of objects to be converted into table rows.
+ * @returns {string} - The generated HTML string containing table rows.
+ */
+
+const formatTableRows = (data) => {
+    return data.map((item) => {
+        const columns = Object.keys(item).map(key => `<td>${item[key]}</td>`).join('')
+        return `<tr>${columns}</tr>`
+    }).join('')
+}
+/**
+ * Prepares the modal for viewing an item.
+ *
+ * This function is triggered when the button to view an item is clicked.
+ * It sends an AJAX request to fetch the item data and opens a SweetAlert modal
+ * to display the details.
+ *
+ * @param {string} button - The button element that triggers the view action.
+ * @param {string} template - The template to be used for displaying the modal.
+ */
+
+const viewDetails = (button, template, table) => {
+    $(document).on("click", button, (evt) => {
+        $this = evt.currentTarget
+
+        Swal.fire({
+          template: template
+        })
+        $(".swal2-popup").removeClass("swal2-icon-warning").addClass("swal2-view")
+        $(".swal2-icon").removeClass("swal2-warning").addClass("swal2-info")
+        const $id = $($this).data("id")
+        const url = `${window.location.href}/${$id}`
+
+        csrf()
+        
+        $.get(url, (res) => {
+            $(`${table} tbody`).html(formatTableRows(res))
+            $(table).DataTable()
+        })
+    })
+}
+
+/**
  * Prepares the modal for editing an item.
  *
  * This function is triggered when the button to edit an item is clicked.

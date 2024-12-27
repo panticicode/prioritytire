@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
+use App\Helpers\UtilityHelper;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use App\Models\Order;
@@ -148,7 +149,7 @@ class ImportedDataController extends Controller
 
     protected function orders($model, $columns)
     {
-        $query = $this->model($model)::select($columns);
+        $query = UtilityHelper::model($model)::select($columns);
 
         if (!$this->user->isAdmin()) 
         {
@@ -164,18 +165,34 @@ class ImportedDataController extends Controller
         abort_if(Gate::denies('imported_data_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         $config = $this->config($model, $type);
         $user   = $this->user;
-        return view('dashboard.imported-data.index', compact('config', 'user', 'model', 'type'));
+        $heads  = ['id', 'import', 'row', 'column', 'old value', 'new value'];
+        return view('dashboard.imported-data.index', compact('config', 'user', 'model', 'type', 'heads'));
     }
 
-    public function show($model, $type)
+    public function show(Request $request, $model, $type, $id)
     {
+        if($request->ajax())
+        {
+            $audits = UtilityHelper::model($model)->find($id)->audits()
+                        ->get()->map(function($audit){
+                return [
+                    'id'        => $audit->id,
+                    'import'    => $audit->import->filename,
+                    'row'       => $audit->row,
+                    'column'    => $audit->column,
+                    'old_value' => $audit->old_value,
+                    'new_value' => $audit->new_value  
+                ];
+            });
 
+            return response()->json($audits);
+        }
     }
 
     public function destroy($model, $type, $id)
     {
         try {
-            $this->model($model)->find($id)->delete();
+            UtilityHelper::model($model)->find($id)->delete();
 
             return response()->json([
                 'status'  => 200,
@@ -189,30 +206,6 @@ class ImportedDataController extends Controller
                 'theme'   => 'error',
                 'message' => 'An error occurred while deleting the Record.',
             ]);
-        }
-    }
-    /**
-     * Resolves and returns an instance of a model class.
-     *
-     * This method takes a model or model name as input and returns an instance of the corresponding model class.
-     * 
-     * - If the provided `$model` is an instance of a `Model`, it constructs the class name based on the model's class name
-     *   and returns an instance of that class.
-     * - If the provided `$model` is a string (assumed to be a model name), it converts the name to its singular form (if needed)
-     *   and then constructs the class name accordingly, returning an instance of the model class.
-     *
-     * @param mixed $model The model instance or model name.
-     * @return Model An instance of the corresponding model class.
-     */
-    protected function model($model): Model
-    {
-        if ($model instanceof Model) 
-        {
-            return App::make('App\\Models\\' . ucfirst(class_basename($model)));
-        } 
-        else 
-        {
-            return App::make('App\\Models\\' . ucfirst(Str::singular($model)));
         }
     }
 }

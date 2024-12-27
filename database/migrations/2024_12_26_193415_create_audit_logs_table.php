@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('import_logs', function (Blueprint $table) {
+        Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('type');
+            $table->foreignId('import_id')->constrained()->onDelete('cascade'); 
+            $table->unsignedBigInteger('model_id'); 
+            $table->string('model');
             $table->integer('row');
             $table->string('column');
-            $table->string('value')->nullable();
-            $table->string('message');
+            $table->string('old_value');
+            $table->string('new_value'); 
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('import_logs');
+        Schema::dropIfExists('audit_logs');
     }
 };
