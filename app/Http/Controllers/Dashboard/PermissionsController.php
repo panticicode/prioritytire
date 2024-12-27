@@ -53,7 +53,7 @@ class PermissionsController extends Controller
     {
         $columns = DB::getSchemaBuilder()->getColumnListing('permissions');
 
-        $columnsToFormat = ['id', 'name', 'description'];
+        $columnsToFormat = ['id', 'name', 'key', 'description'];
 
         $formattedColumns = array_map(function ($column) use ($columnsToFormat) {
             if (in_array($column, $columnsToFormat)) 
@@ -85,7 +85,7 @@ class PermissionsController extends Controller
 
         $heads = array_values(array_filter($formattedColumns));
 
-        $permissions = Permission::select('id', 'name', 'description', 'created_at')
+        $permissions = Permission::select('id', 'name', 'key', 'description', 'created_at')
                                     ->withCount(['users' => function ($query) {
                                         $query->admin('is_admin', false); 
                                     }])->get();   
@@ -104,6 +104,7 @@ class PermissionsController extends Controller
                     $permission->checkbox, 
                     $permission->id,
                     $permission->name,
+                    $permission->key,
                     $permission->description,
                     $permission->users_count,// Exclude Admin for counting
                     $permission->action,
@@ -113,6 +114,7 @@ class PermissionsController extends Controller
             'columns' => array_merge(
                 [['orderable' => false]], 
                 [
+                    null,
                     null,
                     null,
                     null,
@@ -226,7 +228,8 @@ class PermissionsController extends Controller
     /**
      * Store a newly created permission in storage.
      * This method handles the creation of a new permission via an AJAX request, returning a JSON response
-     * indicating success or failure. It includes the permission details in the response.
+     * indicating success or failure. It includes the permission details in the response. If the user is an admin,
+     * the permission will be attached to the user.
      *
      * @param CreatePermissionRequest $request The request containing the necessary data to create a permission.
      * @return \Illuminate\Http\JsonResponse The JSON response with the status, message, and data.
@@ -240,6 +243,11 @@ class PermissionsController extends Controller
                 $data = $request->only(['name', 'description']);
                
                 $permission = Permission::withCount('users')->create($data);
+               
+                if($this->user->isAdmin())
+                {
+                    $permission->users()->attach($this->user->id);
+                }
 
                 return response()->json([
                     'status'  => 200,
@@ -247,6 +255,7 @@ class PermissionsController extends Controller
                         $permission->checkbox,
                         $permission->id,
                         $permission->name,
+                        $permission->key,
                         $permission->description,
                         $permission->users_count ?? 0,
                         $permission->action

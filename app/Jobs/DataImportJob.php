@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Helpers\UtilityHelper;
+use App\Events\ImportFailed;
 use Illuminate\Support\Str;
 use App\Events\DataImport;
 use App\Models\ImportLog;
@@ -18,6 +19,7 @@ use App\Models\Import;
 use App\Models\Order;
 use Carbon\Carbon;
 use Validator;
+use Exception;
 
 class DataImportJob implements ShouldQueue
 {
@@ -76,17 +78,27 @@ class DataImportJob implements ShouldQueue
     public function handle(): void
     {
         try {
+
             $filePath = Storage::path($this->tempPath);
-            $data = Excel::toArray([], $filePath)[0];
+            $data     = Excel::toArray([], $filePath)[0];
+
+            //$data = false; //Test Exception
+
+            if (!$data) 
+            {
+                throw new Exception('Failed to load data from file.');
+            }
 
             $headers = $data[0];
             $requiredHeaders = array_keys($this->config["headers_to_db"]);
+            
+            //$requiredHeaders[] = 'test'; // Test Exception
 
             foreach ($requiredHeaders as $header) 
             {
                 if (!in_array($header, $headers)) 
                 {
-                    return;
+                    throw new Exception("Required header '{$header}' not found.");
                 }
             }
 
@@ -231,6 +243,7 @@ class DataImportJob implements ShouldQueue
             event(new DataImport($this->tempPath, $this->fileName, $this->config, $this->user, $this->type, $this->message));
         } catch (Exception $e) {
             \Log::error('Error in DataImportJob: ' . $e->getMessage());
+            event(new ImportFailed($this->user, $e->getMessage()));
         }
     }
 }
