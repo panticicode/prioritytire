@@ -74,7 +74,12 @@ class Import extends Model
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function users(): \Illuminate\Database\Eloquent\Relations\hasMany
+    {
+        return $this->hasMany(User::class, 'id', 'user_id');
     }
 
     public function logs(): \Illuminate\Database\Eloquent\Relations\hasMany

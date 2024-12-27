@@ -105,6 +105,7 @@ class DataImportJob implements ShouldQueue
             {
                 $rowData = array_combine($headers, $row);
                 $rules = [];
+
                 foreach ($this->config['headers_to_db'] as $key => $field) 
                 {
                     $rules[$key] = $field['validation'];
@@ -135,8 +136,13 @@ class DataImportJob implements ShouldQueue
 
                 $updateKeys = $this->config['update_or_create'];
                 $updateData = array_intersect_key($rowData, array_flip($updateKeys));
-                $createData = array_merge(['row' => $index + 2], array_diff_key($rowData, $updateData));
+                $createData = array_diff_key($rowData, $updateData);
                 unset($createData[""]);
+               
+                if (isset($createData['total_price'])) 
+                {
+                    $createData['total_price'] = UtilityHelper::convertToNumeric($createData['total_price'], $filePath);
+                }
 
                 foreach (array_keys(config('imports')) as $key) 
                 {
