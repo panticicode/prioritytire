@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notifiable;
 use Gate;
 
@@ -76,7 +77,8 @@ class User extends Authenticatable
      * @return string The checkbox HTML.
      */
 
-    public function getCheckboxAttribute() {
+    public function getCheckboxAttribute(): string 
+    {
         $checkbox = '<input type="checkbox" class="bulk" data-id="' . $this->id . '" />';
 
         return $checkbox;
@@ -172,7 +174,7 @@ class User extends Authenticatable
      * @return bool True if the user has the permission, otherwise false.
      */
     
-    public function hasUserPermission($permissionKey)
+    public function hasUserPermission($permissionKey): bool
     {   
         return $this->permissions()->where('key', $permissionKey)->exists();
     }
@@ -185,7 +187,7 @@ class User extends Authenticatable
      *
      * @return bool Returns true if the user is an admin, otherwise returns false.
      */
-    public function scopeIsAdmin()
+    public function scopeIsAdmin(): bool
     {
         return $this->is_admin;
     }
@@ -205,7 +207,7 @@ class User extends Authenticatable
      * @return \Illuminate\Database\Eloquent\Builder
      */
     
-    public function scopeAdmin($query, $role)
+    public function scopeAdmin($query, $role): Builder
     {
         return $query->where('is_admin', $role); 
     }

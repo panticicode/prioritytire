@@ -63,7 +63,8 @@ class Permission extends Model
      * @return string The checkbox HTML.
      */
 
-    public function getCheckboxAttribute() {
+    public function getCheckboxAttribute(): string 
+    {
         $checkbox = '<input type="checkbox" class="bulk" data-id="' . $this->id . '" />';
 
         return $checkbox;

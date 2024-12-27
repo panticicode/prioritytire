@@ -1,5 +1,16 @@
 @extends('layouts.app')
 
+@push('css')
+<style type="text/css">
+.swal2-popup.swal2-modal.swal2-view {
+    width: 70%;
+}
+.dataTables_length {
+    text-align: left;
+}
+</style>
+@endpush
+
 @section('plugins.Datatables', true)
 @section('plugins.Sweetalert2', true)
 
@@ -19,7 +30,7 @@
     <swal-icon type="warning" color="info"></swal-icon>
     <swal-html>
         <div id="view-container">
-            In Progress...
+            <x-adminlte-datatable id="auditLogsDataTable" :heads="$heads" />
         </div>
     </swal-html>
 </template>
@@ -30,7 +41,7 @@
 $(() => {
 	const table = $("#importedDataDataTable").DataTable()
 
-	viewItem(".show-item", "#show-item-template")
+	viewDetails(".show-item", "#show-item-template", "#auditLogsDataTable")
 
 	deleteItem(table)
 })

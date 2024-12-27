@@ -11,7 +11,7 @@ return [
                     'order_date' => [
                         'label' => 'Order Date',
                         'type' => 'date',
-                        'validation' => ['required'],
+                        'validation' => ['required', 'date_format:d.m.Y'],
                     ],
                     'channel' => [
                         'label' => 'Channel',

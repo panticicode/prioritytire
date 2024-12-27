@@ -174,6 +174,18 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'dashboard', 'as' => 'dashbo
       */
      
      Route::get('/imports', [ImportsController::class, 'index'])->name('imports.index');
+
+     /**
+      * Display details of a specific import.
+      *
+      * This route retrieves information about a specific import using model binding, 
+      * including related data.
+      *
+      * @param \App\Models\Import $import The import model instance provided by route model binding.
+      * @return \Illuminate\Http\Response
+      */
+
+     Route::get('/imports/{import}', [ImportsController::class, 'show'])->name('imports.show');
 });
 
 /**

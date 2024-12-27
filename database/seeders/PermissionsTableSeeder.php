@@ -98,7 +98,7 @@ class PermissionsTableSeeder extends Seeder
             ],
             [
                 'name'        => 'Imported Data Show',
-                'description' => 'View details of changes: import, row, column, and old/new values',
+                'description' => 'View details import, row, column, value, and validation message.',
             ],
             [
                 'name'        => 'Imported Data Delete',
@@ -108,6 +108,10 @@ class PermissionsTableSeeder extends Seeder
             [
                 'name'        => 'Imports Access',
                 'description' => 'Access to Imports',
+            ],
+            [
+                'name'        => 'Import Logs Show',
+                'description' => 'View details of changes: import, row, column, and old/new values',
             ],
         ];
    

@@ -105,7 +105,8 @@ class DataImportController extends Controller
         foreach ($request->file("files") as $file) 
         {
             $tempPath = $file->store('temp');
-            DataImportJob::dispatch($tempPath, $config, $this->user, $type, $message);
+            $fileName = $file->getClientOriginalName();
+            DataImportJob::dispatch($tempPath, $fileName, $config, $this->user, $type, $message);
         }
 
         return response()->json([

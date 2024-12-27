@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->date('order_date'); 
+            $table->integer('row');
+            $table->date('order_date');
             $table->string('channel'); 
             $table->string('sku'); 
             $table->string('item_description')->nullable(); 
